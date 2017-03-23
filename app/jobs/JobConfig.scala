@@ -27,6 +27,7 @@ trait JobConfig extends ServicesConfig {
   lazy val INITIAL_DELAY       = s"$name.schedule.initialDelay"
   lazy val INTERVAL            = s"$name.schedule.interval"
   lazy val LOCK_TIMEOUT        = s"$name.schedule.lockTimeout"
+  lazy val NUMBER_OF_DOCUMENTS = s"$name.schedule.numberOfDocuments"
 
   lazy val initialDelay = {
     val dur = ScalaDuration.create(getConfString(INITIAL_DELAY,
@@ -46,5 +47,11 @@ trait JobConfig extends ServicesConfig {
     val dur = ScalaDuration.create(getConfString(LOCK_TIMEOUT,
       throw new RuntimeException(s"Could not find config $LOCK_TIMEOUT")))
     JodaDuration.standardSeconds( FiniteDuration(dur.length, dur.unit).toSeconds )
+  }
+
+  lazy val numberOfDocuments = {
+    getConfString(NUMBER_OF_DOCUMENTS,
+      throw new RuntimeException(s"Could not find config $NUMBER_OF_DOCUMENTS"))
+
   }
 }

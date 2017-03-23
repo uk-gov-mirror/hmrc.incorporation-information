@@ -34,7 +34,7 @@ object IncorporationCheckAPIConnector extends IncorporationCheckAPIConnector wit
 
 class SubmissionAPIFailure extends NoStackTrace
 
-trait IncorporationCheckAPIConnector {
+trait IncorporationCheckAPIConnector extends ServicesConfig {
 
   val proxyUrl: String
   val http: HttpGet with HttpPost
@@ -47,8 +47,9 @@ trait IncorporationCheckAPIConnector {
 
   // TODO - II-INCORP - refactor the recover block - move to a separate method to provide more clarity
   def checkSubmission(timepoint: Option[String] = None)(implicit hc: HeaderCarrier): Future[IncorpUpdatesResponse] = {
+    val items_per_page = getConfString("incorp-updates-job.schedule.numberOfDocuments", throw new Exception("numberOfDocuments not found in config"))
     val tp = timepoint.fold("")(t => s"timepoint=$t&")
-    http.GET[IncorpUpdatesResponse](s"$proxyUrl/internal/check-submission?${tp}items_per_page=1") map {
+    http.GET[IncorpUpdatesResponse](s"$proxyUrl/internal/check-submission?${tp}items_per_page=${items_per_page}") map {
       res => res
     } recover {
       case ex: BadRequestException =>

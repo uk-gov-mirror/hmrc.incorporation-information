@@ -43,6 +43,7 @@ class IncorporationCheckAPIConnectorSpec extends SCRSSpec {
     val connector = new IncorporationCheckAPIConnector {
       val proxyUrl = testProxyUrl
       val http = mockWSHttp
+      val items_per_page = 1
     }
   }
 
