@@ -41,6 +41,7 @@ class SubscriptionRepositoryISpec extends SCRSMongoSpec {
     s"url$n"
   ))
 
+  // TODO - LJ - these should be vals - and why needed given the def above?
   def sub() = Subscription(
     "transId1",
     "test",

@@ -55,10 +55,10 @@ trait SubscriptionsRepository extends Repository[Subscription, BSONObjectID] {
 }
 
 
-sealed trait SubscriptionStatus
+sealed trait SubscriptionStatus  // TODO - LJ - In hindsight - this is a service (rather than repo) concern.
 case object SuccessfulSub extends SubscriptionStatus
 case object FailedSub extends SubscriptionStatus
-case object DeletedSub extends SubscriptionStatus
+case object DeletedSub extends SubscriptionStatus // TODO - LJ - Does this really belong as part of this trait?
 case class IncorpExists(update: IncorpUpdate) extends SubscriptionStatus
 
 
@@ -82,6 +82,7 @@ class SubscriptionsMongoRepository(mongo: () => DB)
       res =>
 
         UpsertResult(res.nModified, res.upserted.size, res.writeErrors)
+// TODO - LJ - Commented out lines ?!
 //
 //        res.n match {
 //          case 1 => {
@@ -101,10 +102,11 @@ class SubscriptionsMongoRepository(mongo: () => DB)
   def deleteSub(transactionId: String, regime: String, subscriber: String): Future[SubscriptionStatus] = {
     val selector = BSONDocument("transactionId" -> transactionId, "regime" -> regime, "subscriber" -> subscriber)
     collection.remove(selector) map {
+      // TODO - LJ - non-exhaustive match!
       case DefaultWriteResult(true, 1, _, _, _, _) => DeletedSub
       case DefaultWriteResult(true, 0, _, _, _, _) => {
         Logger.warn(s"[SubscriptionsRepository] [deleteSub] Didn't delete the subscription with TransId: $transactionId, and regime: $regime, and subscriber: $subscriber")
-        FailedSub
+        FailedSub // TODO - LJ - reason?
       }
     }
   }
@@ -124,4 +126,5 @@ class SubscriptionsMongoRepository(mongo: () => DB)
 
 }
 
+// TODO - LJ - why is this down here - rather than closer to the insert method?
 case class UpsertResult(modified: Int, inserted: Int, errors: Seq[WriteError])

@@ -55,6 +55,8 @@ object IncorpUpdate {
     )(IncorpUpdate.apply, unlift(IncorpUpdate.unapply))
 
 
+  // TODO - LJ review - doesn't _need_ to be a more 'writes' like this - either CaseClass or just produce JSON
+  // TODO - LJ review - hard coded values - e.g. SCRS, PAYE, timestamp
   def writes(callBackUrl: String, transactionId: String): Writes[IncorpUpdate] = new Writes[IncorpUpdate] {
 
     def writes(u: IncorpUpdate) = {

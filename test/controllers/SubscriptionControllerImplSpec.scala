@@ -72,7 +72,10 @@ class SubscriptionControllerImplSpec extends SCRSSpec {
         val response = FakeRequest().withBody(json)
 
         val result = call(controller.checkSubscription(transactionId,regime,subscriber), response)
+
+        // TODO - LJ - this line below asserts nothing and will always be Future[false] :-(
         result.map(res => res == testIncorpUpdate)
+
         status(result) shouldBe 200
       }
 

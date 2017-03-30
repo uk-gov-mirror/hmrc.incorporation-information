@@ -46,6 +46,7 @@ trait IncorpUpdatesJob extends ExclusiveScheduledJob with JobConfig {
   val lock: LockKeeper
   val incorpUpdateService: IncorpUpdateService
 
+  // TODO - LJ - Can remove this COVERAGE-OFF from applying to whole method
   //$COVERAGE-OFF$
   override def executeInMutex(implicit ec: ExecutionContext): Future[Result] = {
     SCRSFeatureSwitches.scheduler.enabled match {

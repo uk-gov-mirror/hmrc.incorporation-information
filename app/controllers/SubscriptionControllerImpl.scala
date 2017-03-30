@@ -26,7 +26,9 @@ import uk.gov.hmrc.play.microservice.controller.BaseController
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
+// TODO - LJ - File should be renamed (shouldn't have Impl in the name)
 
+// TODO - LJ - Should be singleton (potentially in the Module?)
 class SubscriptionControllerImpl extends SubscriptionController {
   override protected val service = SubscriptionService
 }
@@ -40,9 +42,11 @@ trait SubscriptionController extends BaseController {
       withJsonBody[JsObject] { js =>
         val callbackUrl = (js \ "SCRSIncorpSubscription" \ "callbackUrl").as[String]
         service.checkForSubscription(transactionId, regime, subscriber, callbackUrl).map {
+          // TODO - LJ - not exhaustive - DeleteSub :-(
           case IncorpExists(update) => {
             Ok(Json.toJson(update)(IncorpUpdate.writes(callbackUrl, transactionId)))
           }
+          // TODO - LJ - Why does this responses have (non-JSON) text?
           case SuccessfulSub => {
             Accepted("You have successfully added a subscription")
           }
@@ -59,6 +63,7 @@ trait SubscriptionController extends BaseController {
     implicit request =>
         service.deleteSubscription(transactionId, regime, subscriber).map {
            {
+             // TODO - LJ - Why do these responses have (non-JSON) text?
             case DeletedSub => Ok("subscription has been deleted")
             case FailedSub => NotFound("The subscription does not exist")
             case _ => InternalServerError

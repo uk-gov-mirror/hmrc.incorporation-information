@@ -32,6 +32,8 @@ class Module extends AbstractModule {
     bind(classOf[ServicesConfig]).to(classOf[DefaultServicesConfig])
     bind(classOf[MicroserviceConfig]).to(classOf[MicroserviceConfigImpl])
 
+    // TODO - LJ - Should be singletons ? (potentially in this Module?)
+
     // controllers
     bind(classOf[SubscriptionController]).to(classOf[SubscriptionControllerImpl])
     bind(classOf[TransactionalController]).to(classOf[TransactionalControllerImpl])

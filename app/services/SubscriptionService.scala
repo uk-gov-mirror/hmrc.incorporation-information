@@ -28,6 +28,7 @@ import scala.concurrent.Future
 object SubscriptionService
 extends SubscriptionService {
 
+  // TODO - LJ - These should be injected
   override protected val subRepo = Repositories.smRepository
   override protected val incorpRepo = Repositories.incorpUpdateRepository
 
