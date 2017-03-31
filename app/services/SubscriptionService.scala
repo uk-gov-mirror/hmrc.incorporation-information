@@ -25,6 +25,11 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
 
+sealed trait SubscriptionStatus  // TODO - LJ - In hindsight - this is a service (rather than repo) concern.
+case object SuccessfulSub extends SubscriptionStatus
+case object FailedSub extends SubscriptionStatus
+case class IncorpExists(update: IncorpUpdate) extends SubscriptionStatus
+
 object SubscriptionService
 extends SubscriptionService {
 
@@ -69,7 +74,7 @@ trait SubscriptionService {
       case DeletedSub => Logger.info(s"[SubscriptionService] [deleteSubscription] Subscription with transactionId: $transactionId, " +
         s"and regime: $regime, and subscriber: $subscriber was deleted")
         DeletedSub
-      case _ => FailedSub
+      case FailedSub => FailedSub
     }
   }
 }

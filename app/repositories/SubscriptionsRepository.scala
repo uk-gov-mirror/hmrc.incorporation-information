@@ -47,7 +47,7 @@ class SubscriptionsMongo extends MongoDbConnection with ReactiveMongoFormats {
 trait SubscriptionsRepository extends Repository[Subscription, BSONObjectID] {
   def insertSub(sub: Subscription) : Future[UpsertResult]
 
-  def deleteSub(transactionId: String, regime: String, subscriber: String): Future[SubscriptionStatus]
+  def deleteSub(transactionId: String, regime: String, subscriber: String): Future[XXXSubscriptionStatus]
 
 //  def getSubscription(transactionId: String) : Future[Option[Subscription]]  DG
 
@@ -55,11 +55,10 @@ trait SubscriptionsRepository extends Repository[Subscription, BSONObjectID] {
 }
 
 
-sealed trait SubscriptionStatus  // TODO - LJ - In hindsight - this is a service (rather than repo) concern.
-case object SuccessfulSub extends SubscriptionStatus
-case object FailedSub extends SubscriptionStatus
-case object DeletedSub extends SubscriptionStatus // TODO - LJ - Does this really belong as part of this trait?
-case class IncorpExists(update: IncorpUpdate) extends SubscriptionStatus
+
+sealed trait XXXSubscriptionStatus  // TODO - LJ - In hindsight - this is a service (rather than repo) concern.
+case object FailedSub extends XXXSubscriptionStatus
+case object DeletedSub extends XXXSubscriptionStatus // TODO - LJ - Does this really belong as part of this trait?
 
 
 class SubscriptionsMongoRepository(mongo: () => DB)

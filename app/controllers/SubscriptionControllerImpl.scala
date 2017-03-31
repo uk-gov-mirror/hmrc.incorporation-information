@@ -48,7 +48,7 @@ trait SubscriptionController extends BaseController {
           }
           // TODO - LJ - Why does this responses have (non-JSON) text?
           case SuccessfulSub => {
-            Accepted("You have successfully added a subscription")
+            Accepted()
           }
           case FailedSub => {
             InternalServerError
@@ -64,8 +64,8 @@ trait SubscriptionController extends BaseController {
         service.deleteSubscription(transactionId, regime, subscriber).map {
            {
              // TODO - LJ - Why do these responses have (non-JSON) text?
-            case DeletedSub => Ok("subscription has been deleted")
-            case FailedSub => NotFound("The subscription does not exist")
+            case DeletedSub => Ok()
+            case FailedSub => NotFound()
             case _ => InternalServerError
           }
         }
