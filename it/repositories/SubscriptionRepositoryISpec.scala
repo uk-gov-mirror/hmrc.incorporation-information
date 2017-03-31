@@ -26,43 +26,16 @@ class SubscriptionRepositoryISpec extends SCRSMongoSpec {
 
   val testValid = sub()
 
-  def construct() =
-    Subscription(
-      "transId1",
-      "test",
-      "CT",
-      "url"
-    )
+  def sub(): Subscription = sub(1).head
+  def sub(num: Int) = subDetail("transId", "regime", "sub", "url")(num)
+  def secondSub() = subDetail("transId", "test", "PAYE", "url")(1).head
 
-  def sub(num: Int) = (1 to num).map(n => Subscription(
-    s"transId$n",
-    s"regime$n",
-    s"sub$n",
-    s"url$n"
+  def subDetail(t: String, r: String, s: String, url: String)(num: Int) = (1 to num).map(n => Subscription(
+    s"${t}${n}",
+    s"${r}${n}",
+    s"${s}",
+    s"${url}${n}"
   ))
-
-  // TODO - LJ - these should be vals - and why needed given the def above?
-  def sub() = Subscription(
-    "transId1",
-    "test",
-    "CT",
-    "url"
-  )
-
-  def secondSub() = Subscription(
-    "transId1",
-    "test",
-    "PAYE",
-    "url"
-  )
-
-  def subUpdate() = Subscription(
-    "transId1",
-    "test",
-    "CT",
-    "newUrl"
-  )
-
 
   class Setup extends MongoDbConnection {
     val repository = new SubscriptionsMongoRepository(db)
@@ -77,15 +50,13 @@ class SubscriptionRepositoryISpec extends SCRSMongoSpec {
     await(repository.drop)
   }
 
-  val testKey = "testKey"
-
   "getSubscriptions" should {
     "return a submissions" in new Setup {
       await(repository.count) shouldBe 0
       await(repository.insertSub(testValid))
       await(repository.count) shouldBe 1
-      val result = await(repository.getSubscription("transId1","test","CT"))
-      result.head.subscriber shouldBe "CT"
+      val result = await(repository.getSubscription("transId1","regime1","sub"))
+      result shouldBe Some(Subscription("transId1","regime1","sub","url1"))
     }
   }
 
@@ -107,28 +78,26 @@ class SubscriptionRepositoryISpec extends SCRSMongoSpec {
       result shouldBe UpsertResult(1,0,Seq())
     }
 
-
     "update the callback url when an already existing Subscription is updated with a new call back url" in new Setup {
       val firstResponse = await(repository.insertSub(sub))
-      val secondResponse = await(repository.insertSub(subUpdate()))
+      val secondResponse = await(repository.insertSub(sub.copy(callbackUrl = "newUrl")))
 
       firstResponse shouldBe UpsertResult(0,1,Seq())
       secondResponse shouldBe UpsertResult(1,0,Seq())
-
     }
-
   }
 
     "deletesub" should {
       "only delete a single subscription" in new Setup{
         await(repository.count) shouldBe 0
-        await(repository.insertSub(sub))
-        await(repository.insertSub(secondSub))
+        await(repository.insertSub(sub)) shouldBe UpsertResult(0,1,List())
+        await(repository.insertSub(secondSub)) shouldBe UpsertResult(0,1,List())
         await(repository.count) shouldBe 2
-        await(repository.deleteSub("transId1","test","CT"))
+        await(repository.deleteSub("transId1","regime1","sub")) shouldBe DeletedSub
         await(repository.count) shouldBe 1
 
-        val result = await(repository.getSubscription("transId1","test","PAYE"))
+        val result = await(repository.getSubscription("transId1","test1","PAYE"))
+        result shouldBe Some(Subscription("transId1","test1","PAYE","url1"))
         result.head.subscriber shouldBe "PAYE"
       }
 
@@ -142,8 +111,6 @@ class SubscriptionRepositoryISpec extends SCRSMongoSpec {
 
       }
     }
-
-
 
   "wipeTestData" should {
     "remove all test data from submissions status" in new Setup {
