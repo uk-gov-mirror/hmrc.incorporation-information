@@ -27,12 +27,12 @@ object Repositories {
 
   private implicit val mongo = new MongoDbConnection {}.db
 
-  // TODO - LJ - This should have been removed - as per other repos
+  // TODO - DG LJ - This should have been removed - as per other repos
   lazy val smRepository = new SubscriptionsMongoRepository(mongo)
 
   lazy val lockRepository = new LockRepository()
 
-  // TODO - LJ - Why has this been re-added - I removed this
+  // TODO - DG LJ - Why has this been re-added - I removed this
   lazy val incorpUpdateRepository = new IncorpUpdateMongoRepository(mongo, IncorpUpdate.mongoFormat)
 
 }

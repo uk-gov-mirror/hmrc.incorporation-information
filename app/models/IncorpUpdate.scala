@@ -55,8 +55,8 @@ object IncorpUpdate {
     )(IncorpUpdate.apply, unlift(IncorpUpdate.unapply))
 
 
-  // TODO - LJ review - doesn't _need_ to be a more complex 'writes' like this - either CaseClass or just produce JSON
-  // TODO - LJ review - hard coded values - e.g. SCRS, PAYE, timestamp
+  // TODO - DG LJ review - doesn't _need_ to be a more complex 'writes' like this - either CaseClass or just produce JSON
+  // TODO - DG LJ review - hard coded values - e.g. SCRS, PAYE, timestamp
 
 }
 
