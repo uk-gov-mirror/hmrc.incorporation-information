@@ -55,33 +55,32 @@ object IncorpUpdate {
     )(IncorpUpdate.apply, unlift(IncorpUpdate.unapply))
 
 
-  // TODO - LJ review - doesn't _need_ to be a more 'writes' like this - either CaseClass or just produce JSON
+  // TODO - LJ review - doesn't _need_ to be a more complex 'writes' like this - either CaseClass or just produce JSON
   // TODO - LJ review - hard coded values - e.g. SCRS, PAYE, timestamp
-  def writes(callBackUrl: String, transactionId: String): Writes[IncorpUpdate] = new Writes[IncorpUpdate] {
 
-    def writes(u: IncorpUpdate) = {
+}
+
+case class IncorpUpdateResponse(regime: String, subscriber: String, incorpUpdate: IncorpUpdate, callbackUrl: String)
+
+object IncorpUpdateResponse {
+
+  def writes(callBackUrl: String, transactionId: String): Writes[IncorpUpdateResponse] = new Writes[IncorpUpdateResponse] {
+
+    def writes(u: IncorpUpdateResponse) = {
       Json.obj(
         "SCRSIncorpStatus" -> Json.obj(
           "IncorpSubscriptionKey" -> Json.obj(
-            "subscriber" -> "SCRS",
-            "discriminator" -> "PAYE",
+            "subscriber" -> u.subscriber,
+            "regime" -> u.regime,
             "transactionId" -> transactionId
           ),
           "SCRSIncorpSubscription" -> Json.obj(
             "callbackUrl" -> callBackUrl
           ),
-            "IncorpStatusEvent" -> Json.obj(
-              "status" -> u.status,
-              "timestamp" -> "2017-12-21T10:13:09.429Z"//todo: create timestamp here?
-            ).++(
-              u.statusDescription.fold[JsObject](Json.obj())(s => Json.obj("description" -> s))
-            ).++(
-              u.crn.fold[JsObject](Json.obj())(s => Json.obj("crn" -> s))
-            ).++(
-              u.incorpDate.fold[JsObject](Json.obj())(s => Json.obj("incorporationDate" -> s))
-            )
-          )
+          "IncorpStatusEvent" -> Json.toJson(u.incorpUpdate)(IncorpUpdate.apiFormat)
+        )
       )
     }
   }
+
 }
