@@ -19,6 +19,7 @@ package repositories
 import helpers.SCRSMongoSpec
 import models.{IncorpUpdate, QueuedIncorpUpdate}
 import org.joda.time.DateTime
+import constants.QueuedStatus._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -37,11 +38,11 @@ class QueueRepositoryISpec extends SCRSMongoSpec {
   val transactionId = "12345"
 
   val update = IncorpUpdate(transactionId, "rejected", None, None, "tp", Some("description"))
-  val queuedUpdate = QueuedIncorpUpdate("awaiting", now, update)
+  val queuedUpdate = QueuedIncorpUpdate(AWAITING, now, update)
 
   def docs(num: Int = 1) = (1 to num).map(n =>
     QueuedIncorpUpdate(
-      "awaiting",
+      AWAITING,
       now,
       IncorpUpdate(
         transactionId = s"foo$n",

@@ -20,3 +20,8 @@ object CollectionNames {
   lazy val INCORP_INFO = "incorporation-information"
   lazy val QUEUE = "incorp-update-queue"
 }
+
+object QueuedStatus {
+  lazy val AWAITING = "awaiting"
+  lazy val COMPLETED = "completed"
+}
