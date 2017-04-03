@@ -38,11 +38,10 @@ class QueueRepositoryISpec extends SCRSMongoSpec {
   val transactionId = "12345"
 
   val update = IncorpUpdate(transactionId, "rejected", None, None, "tp", Some("description"))
-  val queuedUpdate = QueuedIncorpUpdate(AWAITING, now, update)
+  val queuedUpdate = QueuedIncorpUpdate(now, update)
 
   def docs(num: Int = 1) = (1 to num).map(n =>
     QueuedIncorpUpdate(
-      AWAITING,
       now,
       IncorpUpdate(
         transactionId = s"foo$n",

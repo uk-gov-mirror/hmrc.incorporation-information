@@ -16,12 +16,15 @@
 
 package services
 
+import Helpers.JSONhelpers
 import connectors.IncorporationCheckAPIConnector
-import models.IncorpUpdate
+import models.{IncorpUpdate, QueuedIncorpUpdate}
+import org.joda.time.DateTime
 import org.mockito.{ArgumentCaptor, Matchers}
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mock.MockitoSugar
+import play.api.libs.json.{JsObject, Json}
 import repositories._
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
@@ -29,11 +32,12 @@ import uk.gov.hmrc.play.test.UnitSpec
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class IncorpUpdateServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach {
+class IncorpUpdateServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with JSONhelpers{
 
   val mockIncorporationCheckAPIConnector = mock[IncorporationCheckAPIConnector]
   val mockIncorpUpdateRepository = mock[IncorpUpdateRepository]
   val mockTimepointRepository = mock[TimepointRepository]
+  val mockQueueRepository = mock[QueueRepository]
 
   implicit val hc = HeaderCarrier()
 
@@ -45,12 +49,14 @@ class IncorpUpdateServiceSpec extends UnitSpec with MockitoSugar with BeforeAndA
     reset(mockIncorporationCheckAPIConnector)
     reset(mockIncorpUpdateRepository)
     reset(mockTimepointRepository)
+    reset(mockQueueRepository)
   }
 
   trait mockService extends IncorpUpdateService {
     val incorporationCheckAPIConnector = mockIncorporationCheckAPIConnector
     val incorpUpdateRepository = mockIncorpUpdateRepository
     val timepointRepository = mockTimepointRepository
+    val queueRepository = mockQueueRepository
   }
 
   trait Setup {
@@ -137,6 +143,17 @@ class IncorpUpdateServiceSpec extends UnitSpec with MockitoSugar with BeforeAndA
       captor.getValue shouldBe newTimepoint
 
       response shouldBe InsertResult(1,0,Seq())
+    }
+  }
+
+
+  "createQueuedIncorpUpdate" should {
+    "return a correctly formatted QueuedIncorpUpdate when given an IncorpUpdate" in new Setup {
+
+      val result = service.createQueuedIncorpUpdate(Seq(incorpUpdate))
+      val queuedIncorpUpdate = QueuedIncorpUpdate(DateTime.now, incorpUpdate)
+      val (incorpUpdate, ts) = extractTimestamp(Json.toJson(queuedIncorpUpdate)[JsObject])
+      result shouldBe Seq(queuedIncorpUpdate)
     }
   }
 }

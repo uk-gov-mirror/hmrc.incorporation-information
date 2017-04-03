@@ -117,11 +117,10 @@ object IncorpUpdateResponse {
   }
 }
 
-case class QueuedIncorpUpdate(queueStatus: String, timestamp: DateTime, incorpUpdate: IncorpUpdate)
+case class QueuedIncorpUpdate(timestamp: DateTime, incorpUpdate: IncorpUpdate)
 
 object QueuedIncorpUpdate {
   val format = (
-    (__ \ "queue_status").format[String] and
       (__ \ "timestamp").format[DateTime] and
       (__ \ "incorp_update").format[IncorpUpdate](IncorpUpdate.queueFormat)
   ) (QueuedIncorpUpdate.apply, unlift(QueuedIncorpUpdate.unapply))

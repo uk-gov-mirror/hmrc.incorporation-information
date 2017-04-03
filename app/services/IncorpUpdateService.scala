@@ -35,12 +35,12 @@ class IncorpUpdateServiceImpl @Inject()(
                                          injConnector: IncorporationCheckAPIConnector,
                                          injIncorpRepo: IncorpUpdateMongo,
                                          injTimepointRepo: TimepointMongo,
-                                         injQueueRepo: QueueMongoRepository
+                                         injQueueRepo: QueueMongo
                                        ) extends IncorpUpdateService {
   override val incorporationCheckAPIConnector = injConnector
   override val incorpUpdateRepository = injIncorpRepo.repo
   override val timepointRepository = injTimepointRepo.repo
-  override val queueRepository = injQueueRepo
+  override val queueRepository = injQueueRepo.repo
 }
 
 trait IncorpUpdateService {
@@ -77,13 +77,14 @@ trait IncorpUpdateService {
       storeIncorpUpdates(items) map { ir =>
         ir match {
           case InsertResult(0, _, Seq()) => Logger.info("No Incorp updates were fetched")
-          case InsertResult(i, d, Seq()) => for {
-            newIncorpUpdates <- createQueuedIncorpUpdate(items)
-            copiedToQueue <- copyToQueue(newIncorpUpdates)
-            timepointRepository.updateTimepoint(latestTimepoint(items)).map(tp => {
-              val message = s"$i incorp updates were inserted, $d incorp updates were duplicates, and the timepoint has been updated to $tp"
-              Logger.info(message)
-            })
+          case InsertResult(i, d, Seq()) => copyToQueue(createQueuedIncorpUpdate(items)) map {
+            case true => {
+              timepointRepository.updateTimepoint(latestTimepoint(items)).map(tp => {
+                val message = s"$i incorp updates were inserted, $d incorp updates were duplicates, and the timepoint has been updated to $tp"
+                Logger.info(message)
+              })
+            }
+            case false => Logger.info(s"There was an error when copying incorp updates to the new queue")
           }
           case InsertResult(_, _, e) => Logger.info(s"There was an error when inserting incorp updates, message: $e")
         }
@@ -94,13 +95,13 @@ trait IncorpUpdateService {
 
   def createQueuedIncorpUpdate(incorpUpdates: Seq[IncorpUpdate]): Seq[QueuedIncorpUpdate] = {
     incorpUpdates map { incorp =>
-      QueuedIncorpUpdate(AWAITING, DateTime.now, incorp)
+      QueuedIncorpUpdate(DateTime.now, incorp)
     }
   }
 
   def copyToQueue(queuedIncorpUpdates: Seq[QueuedIncorpUpdate]): Future[Boolean] = {
     queueRepository.storeIncorpUpdates(queuedIncorpUpdates).map {
-      wr => if(wr.inserted == queuedIncorpUpdates.length)
+      _.inserted == queuedIncorpUpdates.length
     }
   }
 
