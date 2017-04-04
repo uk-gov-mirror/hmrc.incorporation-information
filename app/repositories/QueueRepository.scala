@@ -44,6 +44,8 @@ trait QueueRepository {
 
   def getIncorpUpdate(transactionId: String): Future[Option[QueuedIncorpUpdate]]
 
+  def getIncorpUpdates(n: Int): Future[Option[QueuedIncorpUpdate]]
+
   def removeQueuedIncorpUpdate(transactionId: String): Future[Boolean]
 }
 
@@ -60,7 +62,7 @@ class QueueMongoRepository(mongo: () => DB, format: Format[QueuedIncorpUpdate]) 
 
   override def indexes: Seq[Index] = Seq(
     Index(
-      key = Seq("incorp_update.transaction_id" -> IndexType.Ascending),
+      key = Seq("incorp_update.transaction_id" -> IndexType.Ascending, "timepoint" -> IndexType.Ascending),
       name = Some("QueuedIncorpIndex"), unique = true, sparse = false
     )
   )
@@ -82,7 +84,12 @@ class QueueMongoRepository(mongo: () => DB, format: Format[QueuedIncorpUpdate]) 
     collection.find(selector(transactionId)).one[QueuedIncorpUpdate]
   }
 
+  override def getIncorpUpdates(n: Int): Future[Seq[QueuedIncorpUpdate]] = {
+    findAll()
+  }
+
   override def removeQueuedIncorpUpdate(transactionId: String): Future[Boolean] = {
     collection.remove(selector(transactionId)).map(_.n > 0)
   }
 }
+

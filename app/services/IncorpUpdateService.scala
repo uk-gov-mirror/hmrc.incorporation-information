@@ -113,7 +113,7 @@ trait IncorpUpdateService {
   def copyToQueue(queuedIncorpUpdates: Seq[QueuedIncorpUpdate]): Future[Boolean] = {
     queueRepository.storeIncorpUpdates(queuedIncorpUpdates).map { r =>
       // TODO - explain result
-      Logger.info(s"updates = ${queuedIncorpUpdates}")
+      Logger.info(s"Incorp updates to be copied to queue = ${queuedIncorpUpdates}")
       Logger.info(s"result = ${r}")
       r.inserted == queuedIncorpUpdates.length
     }

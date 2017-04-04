@@ -19,6 +19,7 @@ package services
 import javax.inject.{Inject, Singleton}
 
 import connectors.IncorporationCheckAPIConnector
+import models.QueuedIncorpUpdate
 import repositories._
 
 import scala.concurrent.Future
@@ -44,8 +45,12 @@ trait SubscriptionFiringService {
   val queueRepository: QueueRepository
 
 
-//  def fireIncorpUpdateBatch(): Future[Seq[Boolean]] = {
-//
-//  }
+  def fireIncorpUpdateBatch(): Future[Seq[Boolean]] = {
+    queueRepository.getIncorpUpdates(30).map { updates =>
+    }
+  }
+
+
+
 
 }
