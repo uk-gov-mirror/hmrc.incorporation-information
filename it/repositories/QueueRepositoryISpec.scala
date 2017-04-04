@@ -105,6 +105,19 @@ class QueueRepositoryISpec extends SCRSMongoSpec {
       count shouldBe 1
     }
 
+    "insert duplicate documents" in new Setup {
+      count shouldBe 0
+
+      await(repo.storeIncorpUpdates(docs(1)))
+      count shouldBe 1
+
+      val response = await(repo.storeIncorpUpdates(docs(1)))
+      response.inserted shouldBe 0
+      response.duplicate shouldBe 1
+      response.errors.size shouldBe 0
+      count shouldBe 1
+    }
+
     "insert 6 docs" in new Setup {
       count shouldBe 0
       val num = 6

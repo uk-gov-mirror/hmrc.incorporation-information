@@ -71,24 +71,35 @@ trait IncorpUpdateService {
 
   private[services] def latestTimepoint(items: Seq[IncorpUpdate]): String = items.reverse.head.timepoint
 
-
+  // TODO - look to refactor this into a simpler for-comprehension
   def updateNextIncorpUpdateJobLot(implicit hc: HeaderCarrier): Future[InsertResult] = {
     fetchIncorpUpdates flatMap { items =>
-      storeIncorpUpdates(items) map { ir =>
+      storeIncorpUpdates(items) flatMap { ir =>
         ir match {
-          case InsertResult(0, _, Seq()) => Logger.info("No Incorp updates were fetched")
-          case InsertResult(i, d, Seq()) => copyToQueue(createQueuedIncorpUpdate(items)) map {
-            case true => {
-              timepointRepository.updateTimepoint(latestTimepoint(items)).map(tp => {
-                val message = s"$i incorp updates were inserted, $d incorp updates were duplicates, and the timepoint has been updated to $tp"
-                Logger.info(message)
-              })
-            }
-            case false => Logger.info(s"There was an error when copying incorp updates to the new queue")
+          case InsertResult(0, _, Seq()) => {
+            Logger.info("No Incorp updates were fetched")
+            Future.successful(ir)
           }
-          case InsertResult(_, _, e) => Logger.info(s"There was an error when inserting incorp updates, message: $e")
+          case InsertResult(i, d, Seq()) => {
+            copyToQueue(createQueuedIncorpUpdate(items)) flatMap {
+              case true => {
+                timepointRepository.updateTimepoint(latestTimepoint(items)).map(tp => {
+                  val message = s"$i incorp updates were inserted, $d incorp updates were duplicates, and the timepoint has been updated to $tp"
+                  Logger.info(message)
+                  ir
+                })
+              }
+              case false => {
+                Logger.info(s"There was an error when copying incorp updates to the new queue")
+                Future.successful(ir)
+              }
+            }
+          }
+          case InsertResult(_, _, e) => {
+            Logger.info(s"There was an error when inserting incorp updates, message: $e")
+            Future.successful(ir)
+          }
         }
-        ir
       }
     }
   }
@@ -100,8 +111,11 @@ trait IncorpUpdateService {
   }
 
   def copyToQueue(queuedIncorpUpdates: Seq[QueuedIncorpUpdate]): Future[Boolean] = {
-    queueRepository.storeIncorpUpdates(queuedIncorpUpdates).map {
-      _.inserted == queuedIncorpUpdates.length
+    queueRepository.storeIncorpUpdates(queuedIncorpUpdates).map { r =>
+      // TODO - explain result
+      Logger.info(s"updates = ${queuedIncorpUpdates}")
+      Logger.info(s"result = ${r}")
+      r.inserted == queuedIncorpUpdates.length
     }
   }
 

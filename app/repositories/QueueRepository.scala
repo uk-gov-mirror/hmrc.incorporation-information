@@ -20,11 +20,13 @@ import javax.inject.{Inject, Singleton}
 
 import constants.CollectionNames._
 import models.QueuedIncorpUpdate
+import play.api.Logger
 import play.api.libs.json.Format
 import play.modules.reactivemongo.ReactiveMongoComponent
 import reactivemongo.api.DB
-import reactivemongo.api.indexes.{IndexType, Index}
+import reactivemongo.api.indexes.{Index, IndexType}
 import reactivemongo.bson.{BSONDocument, BSONObjectID}
+import reactivemongo.core.errors.DatabaseException
 import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 
@@ -69,6 +71,10 @@ class QueueMongoRepository(mongo: () => DB, format: Format[QueuedIncorpUpdate]) 
         val inserted = wr.n
         val (duplicates, errors) = wr.writeErrors.partition(_.code == ERR_DUPLICATE)
         InsertResult(inserted, duplicates.size, errors)
+    } recover {
+      case ex: DatabaseException =>
+        Logger.info(s"Failed to store incorp update with transactionId: ${ex.originalDocument.get.get("incorp_update.transaction_id").get.toString} due to error: $ex")
+        throw new Exception
     }
   }
 
