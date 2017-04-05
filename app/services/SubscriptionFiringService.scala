@@ -18,37 +18,68 @@ package services
 
 import javax.inject.{Inject, Singleton}
 
-import connectors.IncorporationCheckAPIConnector
-import models.QueuedIncorpUpdate
+import connectors.FiringSubscriptionsConnector
+import models.{IncorpUpdate, IncorpUpdateResponse}
 import repositories._
 
 import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
 
 @Singleton
 class SubscriptionFiringServiceImpl @Inject()(
-                                               injConnector: IncorporationCheckAPIConnector,
-                                               injIncorpRepo: IncorpUpdateMongo,
-                                               injTimepointRepo: TimepointMongo,
-                                               injQueueRepo: QueueMongo
+                                               fsConnector: FiringSubscriptionsConnector,
+                                               injQueueRepo: QueueMongo,
+                                               injSubRepo: SubscriptionsMongo
                                              ) extends SubscriptionFiringService {
-  override val incorporationCheckAPIConnector = injConnector
-  override val incorpUpdateRepository = injIncorpRepo.repo
-  override val timepointRepository = injTimepointRepo.repo
+  override val firingSubsConnector = fsConnector
   override val queueRepository = injQueueRepo.repo
+  override val subscriptionsRepository = injSubRepo.repo
 }
 
 trait SubscriptionFiringService {
-
-  val incorporationCheckAPIConnector: IncorporationCheckAPIConnector
-  val incorpUpdateRepository: IncorpUpdateRepository
-  val timepointRepository: TimepointRepository
+  val firingSubsConnector: FiringSubscriptionsConnector
   val queueRepository: QueueRepository
+  val subscriptionsRepository: SubscriptionsRepository
+
+//  def fireIncorpUpdateBatch(): Future[Seq[Boolean]] = {
+//    queueRepository.getIncorpUpdates.map { updates => updates.map {
+//      update => for {
+//        subs <- subscriptionsRepository.getSubscriptions(update.incorpUpdate.transactionId)
+//      } yield subs.map {
+//        sub => for {
+//          iuResponse <- IncorpUpdateResponse.writes
+//          response <- firingSubsConnector.connectToAnyURL(iuResponse, sub.callbackUrl)
+//        } yield response {
+//          response match {
+//            case 200 => true
+//            case _ => false
+//        }
+//        }
+//      }
+//    }
+//    return Future(Seq(true))
+//  }
 
 
-  def fireIncorpUpdateBatch(): Future[Seq[Boolean]] = {
-    queueRepository.getIncorpUpdates(30).map { updates =>
+
+    def fireIncorpUpdate(iu: IncorpUpdate): Future[Seq[Boolean]] = {
+
+      subscriptionsRepository.getSubscriptions(iu.transactionId) flatMap { subscriptions =>
+        Future.sequence( subscriptions map { sub =>
+          val iuResponse: IncorpUpdateResponse = IncorpUpdateResponse(sub.regime, sub.subscriber, sub.callbackUrl, iu)
+
+          firingSubsConnector.connectToAnyURL(iuResponse, sub.callbackUrl) flatMap { response =>
+            response.status match {
+              case 200 => //go ahead and delete the subscription and queuedIncorpUpdate
+                Future(true)
+              case _ => //need to log which one didnt return a 200, update the timepoint so firing the update is tried again later
+                Future(false)
+            }
+          }
+        } )
+      }
     }
-  }
+
 
 
 

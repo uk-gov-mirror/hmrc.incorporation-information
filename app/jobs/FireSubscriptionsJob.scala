@@ -21,7 +21,7 @@ import javax.inject.{Inject, Singleton}
 import org.joda.time.Duration
 import play.api.Logger
 import repositories.Repositories
-import services.IncorpUpdateService
+import services.{IncorpUpdateService, SubscriptionFiringService}
 import uk.gov.hmrc.lock.LockKeeper
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.scheduling.ExclusiveScheduledJob
@@ -30,9 +30,9 @@ import utils.SCRSFeatureSwitches
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class FireSubscriptionsJobImpl @Inject()(injService: IncorpUpdateService) extends FireSubscriptionsJob {
+class FireSubscriptionsJobImpl @Inject()(fireSubsService: SubscriptionFiringService) extends FireSubscriptionsJob {
   val name = "fire-subs-job"
-  lazy val incorpUpdateService = injService
+  lazy val subscriptionFiringService = fireSubsService
 
   override lazy val lock: LockKeeper = new LockKeeper() {
     override val lockId = s"$name-lock"
@@ -44,7 +44,7 @@ class FireSubscriptionsJobImpl @Inject()(injService: IncorpUpdateService) extend
 trait FireSubscriptionsJob extends ExclusiveScheduledJob with JobConfig {
 
   val lock: LockKeeper
-  val incorpUpdateService: IncorpUpdateService
+  val subscriptionFiringService: SubscriptionFiringService
 
   //$COVERAGE-OFF$
   override def executeInMutex(implicit ec: ExecutionContext): Future[Result] = {
@@ -52,7 +52,7 @@ trait FireSubscriptionsJob extends ExclusiveScheduledJob with JobConfig {
       case true => {
         lock.tryLock {
           Logger.info(s"Triggered $name")
-          incorpUpdateService.updateNextIncorpUpdateJobLot(HeaderCarrier()) map { result =>
+          subscriptionFiringService.fireIncorpUpdateBatch map { result =>
             val message = s"Feature is turned on - result = ${result}"
             Logger.info(message)
             Result(message)

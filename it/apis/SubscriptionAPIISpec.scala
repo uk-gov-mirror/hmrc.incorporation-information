@@ -17,11 +17,12 @@
 package apis
 
 import helpers.IntegrationSpecBase
-import models.{IncorpUpdate, Subscription}
+import models.{IncorpUpdate, QueuedIncorpUpdate, Subscription}
+import org.joda.time.DateTime
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.modules.reactivemongo.ReactiveMongoComponent
-import repositories.{IncorpUpdateMongo, SubscriptionsMongo}
+import repositories.{IncorpUpdateMongo, QueueMongo, SubscriptionsMongo}
 import play.api.libs.json.{JsObject, Json, __}
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -52,11 +53,14 @@ class SubscriptionAPIISpec extends IntegrationSpecBase {
     val mongo = new SubscriptionsMongo
     val incRepo = new IncorpUpdateMongo(reactiveMongoComponent).repo
     val repository = mongo.repo
+    val queueRepo = new QueueMongo(reactiveMongoComponent).repo
 
     def insert(sub: Subscription) = await(repository.insert(sub))
     def insert(update: IncorpUpdate) = await(incRepo.insert(update))
+    def insert(queuedIncorpUpdate: QueuedIncorpUpdate) = await(queueRepo.insert(queuedIncorpUpdate))
     def subCount = await(repository.count)
     def incCount = await(incRepo.count)
+    def queueCount = await(queueRepo.count)
   }
 
   override def beforeEach() = new Setup {
@@ -64,6 +68,8 @@ class SubscriptionAPIISpec extends IntegrationSpecBase {
     await(repository.ensureIndexes)
     await(incRepo.drop)
     await(incRepo.ensureIndexes)
+    await(queueRepo.drop)
+    await(queueRepo.ensureIndexes)
   }
 
   override def afterEach() = new Setup {
@@ -82,6 +88,7 @@ class SubscriptionAPIISpec extends IntegrationSpecBase {
   val subscriber = "abc123"
   val url = "www.test.com"
   val sub = Subscription(transactionId, regime, subscriber, url)
+  val incorpUpdate = IncorpUpdate(transactionId, "rejected", None, None, "tp", Some("description"))
 
   val json = Json.parse(
     """
@@ -103,6 +110,26 @@ class SubscriptionAPIISpec extends IntegrationSpecBase {
     """.stripMargin
   )
 
+  val jsonIncorpUpdate = Json.parse(
+    """
+      |{
+      |  "SCRSIncorpStatus":{
+      |    "IncorpSubscriptionKey":{
+      |      "subscriber":"abc123",
+      |      "discriminator":"CT100",
+      |      "transactionId":"123abc"
+      |    },
+      |    "SCRSIncorpSubscription":{
+      |      "callbackUrl":"www.testUpdate.com"
+      |    },
+      |    "IncorpStatusEvent":{
+      |      "status":"rejected",
+      |      "description":"description"
+      |    }
+      |  }
+      |}
+    """.stripMargin)
+
   "setupSubscription" should {
 
     def setupSimpleAuthMocks() = {
@@ -119,28 +146,6 @@ class SubscriptionAPIISpec extends IntegrationSpecBase {
     }
 
     "return a 200 HTTP response when an existing IncorpUpdate is fetched" in new Setup {
-      val expectedJson = Json.parse(
-        """
-          |{
-          |  "SCRSIncorpStatus":{
-          |    "IncorpSubscriptionKey":{
-          |      "subscriber":"abc123",
-          |      "discriminator":"CT100",
-          |      "transactionId":"123abc"
-          |    },
-          |    "SCRSIncorpSubscription":{
-          |      "callbackUrl":"www.testUpdate.com"
-          |    },
-          |    "IncorpStatusEvent":{
-          |      "status":"rejected",
-          |      "description":"description"
-          |    }
-          |  }
-          |}
-        """.stripMargin)
-
-      val incorpUpdate = IncorpUpdate(transactionId, "rejected", None, None, "tp", Some("description"))
-
       setupSimpleAuthMocks()
       insert(incorpUpdate)
       incCount shouldBe 1
@@ -149,7 +154,7 @@ class SubscriptionAPIISpec extends IntegrationSpecBase {
       response.status shouldBe 200
 
       val (_, jsonNoTs) = extractTimestamp(response.json.as[JsObject])
-      jsonNoTs shouldBe expectedJson
+      jsonNoTs shouldBe jsonIncorpUpdate
 
     }
 
@@ -170,6 +175,9 @@ class SubscriptionAPIISpec extends IntegrationSpecBase {
       response.status shouldBe 404
     }
   }
+
+
+
 
 }
 

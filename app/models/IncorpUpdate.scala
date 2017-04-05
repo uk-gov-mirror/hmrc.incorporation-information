@@ -85,6 +85,8 @@ object IncorpStatusEvent {
       (__ \ "description").formatNullable[String] and
       (__ \ "timestamp").format[DateTime]
     ) (IncorpStatusEvent.apply, unlift(IncorpStatusEvent.unapply))
+
+    implicit val format = Json.format[IncorpStatusEvent]
 }
 
 case class IncorpUpdateResponse(regime: String, subscriber: String, callbackUrl: String, incorpUpdate: IncorpUpdate)

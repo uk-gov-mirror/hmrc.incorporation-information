@@ -44,7 +44,7 @@ trait QueueRepository {
 
   def getIncorpUpdate(transactionId: String): Future[Option[QueuedIncorpUpdate]]
 
-  def getIncorpUpdates(n: Int): Future[Option[QueuedIncorpUpdate]]
+  def getIncorpUpdates: Future[Seq[QueuedIncorpUpdate]]
 
   def removeQueuedIncorpUpdate(transactionId: String): Future[Boolean]
 }
@@ -84,7 +84,7 @@ class QueueMongoRepository(mongo: () => DB, format: Format[QueuedIncorpUpdate]) 
     collection.find(selector(transactionId)).one[QueuedIncorpUpdate]
   }
 
-  override def getIncorpUpdates(n: Int): Future[Seq[QueuedIncorpUpdate]] = {
+  override def getIncorpUpdates: Future[Seq[QueuedIncorpUpdate]] = {
     findAll()
   }
 

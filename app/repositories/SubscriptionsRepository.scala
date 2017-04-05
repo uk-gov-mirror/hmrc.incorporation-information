@@ -44,6 +44,8 @@ trait SubscriptionsRepository extends Repository[Subscription, BSONObjectID] {
 
   def getSubscription(transactionId: String, regime: String, subscriber: String) : Future[Option[Subscription]]
 
+  def getSubscriptions(transactionId: String): Future[Seq[Subscription]]
+
   def wipeTestData(): Future[WriteResult]
 }
 
@@ -90,6 +92,11 @@ class SubscriptionsMongoRepository(mongo: () => DB)
   def getSubscription(transactionId: String, regime: String, subscriber: String): Future[Option[Subscription]] = {
     val query = BSONDocument("transactionId" -> transactionId, "regime" -> regime, "subscriber" -> subscriber)
     collection.find(query).one[Subscription]
+  }
+
+  def getSubscriptions(transactionId: String): Future[Seq[Subscription]] = {
+    val query = BSONDocument("transactionId" -> transactionId)
+    collection.find(query).cursor[Subscription]().collect[Seq]()
   }
 
 
