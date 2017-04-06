@@ -20,6 +20,7 @@ import javax.inject.{Inject, Singleton}
 
 import constants.CollectionNames._
 import models.QueuedIncorpUpdate
+import org.joda.time.DateTime
 import play.api.Logger
 import play.api.libs.json.Format
 import play.modules.reactivemongo.ReactiveMongoComponent
@@ -47,6 +48,8 @@ trait QueueRepository {
   def getIncorpUpdates: Future[Seq[QueuedIncorpUpdate]]
 
   def removeQueuedIncorpUpdate(transactionId: String): Future[Boolean]
+
+  def updateTimestamp(transactionId: String): Future[Boolean]
 }
 
 class QueueMongoRepository(mongo: () => DB, format: Format[QueuedIncorpUpdate]) extends ReactiveRepository[QueuedIncorpUpdate, BSONObjectID](
@@ -62,7 +65,7 @@ class QueueMongoRepository(mongo: () => DB, format: Format[QueuedIncorpUpdate]) 
 
   override def indexes: Seq[Index] = Seq(
     Index(
-      key = Seq("incorp_update.transaction_id" -> IndexType.Ascending, "timepoint" -> IndexType.Ascending),
+      key = Seq("incorp_update.transaction_id" -> IndexType.Ascending, "timestamp" -> IndexType.Ascending),
       name = Some("QueuedIncorpIndex"), unique = true, sparse = false
     )
   )
@@ -90,6 +93,15 @@ class QueueMongoRepository(mongo: () => DB, format: Format[QueuedIncorpUpdate]) 
 
   override def removeQueuedIncorpUpdate(transactionId: String): Future[Boolean] = {
     collection.remove(selector(transactionId)).map(_.n > 0)
+  }
+
+  override def updateTimestamp(transactionId: String): Future[Boolean] = {
+    val modifier = BSONDocument("$set" -> BSONDocument("timestamp" -> DateTime.now.plusMinutes(10).getMillis))
+    collection.findAndUpdate(selector(transactionId), modifier, true, false).map{
+      _.result match {
+        case Some(_) => true //TO DO - need to change this
+      }
+    }
   }
 }
 

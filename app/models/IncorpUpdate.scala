@@ -37,6 +37,8 @@ object IncorpUpdate {
     )
   )
 
+  implicit val format = Json.format[IncorpUpdate]
+
   val mongoFormat = (
     (__ \ "_id").format[String] and
       (__ \ "transaction_status").format[String] and
@@ -117,6 +119,8 @@ object IncorpUpdateResponse {
 
     def now: DateTime = DateTime.now(DateTimeZone.UTC)
   }
+
+  implicit val format = Json.format[IncorpUpdateResponse]
 }
 
 case class QueuedIncorpUpdate(timestamp: DateTime, incorpUpdate: IncorpUpdate)

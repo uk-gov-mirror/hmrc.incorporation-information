@@ -18,7 +18,7 @@ package connectors
 
 import com.github.tomakehurst.wiremock.client.WireMock._
 import helpers.IntegrationSpecBase
-import models.IncorpStatusEvent
+import models.{IncorpStatusEvent, IncorpUpdate, IncorpUpdateResponse}
 import org.joda.time.DateTime
 import play.api.Application
 import play.api.inject.guice.GuiceApplicationBuilder
@@ -45,7 +45,8 @@ class FiringSubscriptionsConnectorISpec extends IntegrationSpecBase {
 
   implicit val hc = HeaderCarrier()
 
-  val incorpStatusEvent = IncorpStatusEvent("awaiting", None, None, None, DateTime.now)
+  val incorpUpdate = IncorpUpdate("trans123", "rejected", None, None, "tp", Some("description"))
+  val incorpUpdateResponse = IncorpUpdateResponse("CT", "test", "www.test.com", incorpUpdate)
 
 
   "fireIncorpUpdate" should {
@@ -53,7 +54,7 @@ class FiringSubscriptionsConnectorISpec extends IntegrationSpecBase {
     "return a 200 HTTP response from a given callbackUrl" in {
       val firingSubscriptionsConnector = new FiringSubscriptionsConnectorImpl()
 
-      def connectToAnyURL = firingSubscriptionsConnector.connectToAnyURL(incorpStatusEvent, s"$mockUrl/testuri")
+      def connectToAnyURL = firingSubscriptionsConnector.connectToAnyURL(incorpUpdateResponse, s"$mockUrl/testuri")
 
       stubFor(post(urlMatching("/testuri"))
         .willReturn(

@@ -149,4 +149,22 @@ class QueueRepositoryISpec extends SCRSMongoSpec {
     }
   }
 
+  "updateTimestamp" should {
+    "update a Timestamp of an existing queued incorp update" in new Setup {
+      count shouldBe 0
+      val numPart = 1
+      await(repo.storeIncorpUpdates(docs(1)))
+      count shouldBe 1
+
+      val result = await(repo.getIncorpUpdate("foo1"))
+      result.get.timestamp shouldBe now
+
+      await(repo.updateTimestamp("foo1"))
+      val updateResult = await(repo.getIncorpUpdate("foo1"))
+      val updatedTimestamp = now.plusMinutes(10)
+
+      updateResult.get.timestamp.getMillis shouldBe (updatedTimestamp.toDate.getTime +- 10000)
+    }
+  }
+
 }
