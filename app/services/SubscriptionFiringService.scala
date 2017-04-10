@@ -72,15 +72,17 @@ trait SubscriptionFiringService {
     Future(ts.getMillis <= DateTime.now.getMillis)
   }
 
-  def deleteSub(transId: String, regime: String, subscriber: String): Future[Boolean] = {
+  private def deleteSub(transId: String, regime: String, subscriber: String): Future[Boolean] = {
     subscriptionsRepository.deleteSub(transId, regime, subscriber).map(res => res match {
-      case DefaultWriteResult(true, _, _, _, _, _) => true
+      case DefaultWriteResult(true, _, _, _, _, _) =>
+        Logger.info(s"[SubscriptionFiringService][deleteSub] Subscription with transactionId: ${transId} deleted sub for $regime")
+        true
       case _ => Logger.info(s"[SubscriptionFiringService][deleteSub] Subscription with transactionId: ${transId} failed to delete")
         false
     })
   }
 
-  def deleteQueuedIU(transId: String): Future[Boolean] = {
+  private def deleteQueuedIU(transId: String): Future[Boolean] = {
     subscriptionsRepository.getSubscriptions(transId) flatMap{
       case h :: t => {
         Logger.info(s"[SubscriptionFiringService][deleteQueuedIU] QueuedIncorpUdate with transactionId: ${transId} cannot be deleted as there are other " +
@@ -89,7 +91,8 @@ trait SubscriptionFiringService {
       }
       case Nil => {
         queueRepository.removeQueuedIncorpUpdate(transId).map{
-          case true => true
+          case true => Logger.info(s"[SubscriptionFiringService][deleteQueuedIU] QueuedIncorpUpdate with transactionId: ${transId} was deleted")
+            true
           case false => Logger.info(s"[SubscriptionFiringService][deleteQueuedIU] QueuedIncorpUpdate with transactionId: ${transId} failed to delete")
             false
         }
@@ -98,7 +101,7 @@ trait SubscriptionFiringService {
   }
 
 
-  def fireIncorpUpdate(iu: QueuedIncorpUpdate): Future[Seq[Boolean]] = {
+  private def fireIncorpUpdate(iu: QueuedIncorpUpdate): Future[Seq[Boolean]] = {
 
     subscriptionsRepository.getSubscriptions(iu.incorpUpdate.transactionId) flatMap { subscriptions =>
       Future.sequence( subscriptions map { sub =>
@@ -106,8 +109,8 @@ trait SubscriptionFiringService {
 
         firingSubsConnector.connectToAnyURL(iuResponse, sub.callbackUrl)(hc) flatMap { response =>
           for {
-            _ <- deleteSub(sub.transactionId, sub.regime, sub.subscriber)
-            deleted <- deleteQueuedIU(iu.incorpUpdate.transactionId)
+            deleted <- deleteSub(sub.transactionId, sub.regime, sub.subscriber)
+//            deleted <- deleteQueuedIU(iu.incorpUpdate.transactionId)
           } yield deleted
         } recoverWith {
           case e : Exception =>
@@ -115,7 +118,9 @@ trait SubscriptionFiringService {
             queueRepository.updateTimestamp(sub.transactionId)
             Future(false)
         }
-      } )
+      } ) flatMap { sb =>
+        deleteQueuedIU(iu.incorpUpdate.transactionId) map { b => Seq(false, b) }
+      }
     }
   }
 

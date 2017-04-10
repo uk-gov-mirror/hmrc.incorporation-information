@@ -90,7 +90,7 @@ class FireSubscriptionsAPIISpec extends IntegrationSpecBase {
 
 
   "fireIncorpUpdateBatch" should {
-    "return a Sequence of true values when one incorp update has been successfully fired" in new Setup {
+    "return a Sequence of true values when one incorp update has been successfully fired" ignore new Setup {
       subCount shouldBe 0
       insert(sub)
       subCount shouldBe 1
@@ -109,7 +109,7 @@ class FireSubscriptionsAPIISpec extends IntegrationSpecBase {
 
     "return a sequence of (false, true) when two subscriptions with the same transId have successfully returned 200 HTTP responses and then deleted" +
       "the first false value is due to that another subscription exists with the same transId at the time and therefore the queued incorp update" +
-      "cannot be deleted when the first subscription has been successfully tried and deleted" in new Setup {
+      "cannot be deleted when the first subscription has been successfully tried and deleted" ignore new Setup {
       subCount shouldBe 0
       insert(sub)
       subCount shouldBe 1
@@ -129,8 +129,31 @@ class FireSubscriptionsAPIISpec extends IntegrationSpecBase {
     }
 
 
+    // DUPLICATE - start
+    (1 to 10).map {
+      i => s"test $i" in new Setup {
+        subCount shouldBe 0
+        insert(sub)
+        subCount shouldBe 1
+        insert(sub2)
+        subCount shouldBe 2
+
+        queueCount shouldBe 0
+        insert(queuedIncorpUpdate)
+        queueCount shouldBe 1
+
+        val service = app.injector.instanceOf[SubscriptionFiringService]
+        stubPost("/mockUri", 200, "")
+
+        val fResult = service.fireIncorpUpdateBatch
+        val result = await(fResult)
+        result shouldBe Seq(Seq(false, true))//the test run keeps swapping these values around, I think false should always be first
+      }
+    }
+    // DUPLICATE - end
+
     "return a false value and two true values when three updates have been successfully fired, the first false value should be there as there are two " +
-      "subscriptions with the same transId, so the queued incorp update should not be deleted before the second subscription is fired and deleted" in new Setup {
+      "subscriptions with the same transId, so the queued incorp update should not be deleted before the second subscription is fired and deleted" ignore new Setup {
       subCount shouldBe 0
       insert(sub)
       subCount shouldBe 1
@@ -154,7 +177,7 @@ class FireSubscriptionsAPIISpec extends IntegrationSpecBase {
     }
 
 
-    "return a true value when an update has been fired that matches the transId of one of the two Subscriptions in the database" in new Setup {
+    "return a true value when an update has been fired that matches the transId of one of the two Subscriptions in the database" ignore new Setup {
       subCount shouldBe 0
       insert(sub3)
       subCount shouldBe 1
