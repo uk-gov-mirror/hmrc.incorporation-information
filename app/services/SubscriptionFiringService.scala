@@ -19,7 +19,7 @@ package services
 import javax.inject.{Inject, Singleton}
 
 import connectors.FiringSubscriptionsConnector
-import models.{IncorpUpdateResponse, QueuedIncorpUpdate, Subscription}
+import models.{IncorpUpdateResponse, QueuedIncorpUpdate}
 import org.joda.time.DateTime
 import play.api.Logger
 import reactivemongo.api.commands.DefaultWriteResult
@@ -72,7 +72,7 @@ trait SubscriptionFiringService {
     if (tsRes){
       fireIncorpUpdate(update)
     } else {
-      Logger.info(s"[SubscriptionFiringService][f] QueuedIncorpUpdate with transactionId: ${update.incorpUpdate.transactionId} and timestamp: ${update.timestamp}" +
+      Logger.info(s"[SubscriptionFiringService][fire] QueuedIncorpUpdate with transactionId: ${update.incorpUpdate.transactionId} and timestamp: ${update.timestamp}" +
         s" cannot be processed at this time as the timestamp is in the future")
       Future.successful(false)
     }
