@@ -44,7 +44,6 @@ trait SubscriptionsRepository extends Repository[Subscription, BSONObjectID] {
 
   def getSubscription(transactionId: String, regime: String, subscriber: String) : Future[Option[Subscription]]
 
-
   //might need to be of Future[Option[Seq[Subscription]]]
   def getSubscriptions(transactionId: String): Future[Seq[Subscription]]
 

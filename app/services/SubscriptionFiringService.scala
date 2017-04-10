@@ -68,9 +68,9 @@ trait SubscriptionFiringService {
     }
   }
 
-    def checkTimestamp(ts: DateTime): Future[Boolean] = {
-      Future(ts.getMillis <= DateTime.now.getMillis)
-    }
+  def checkTimestamp(ts: DateTime): Future[Boolean] = {
+    Future(ts.getMillis <= DateTime.now.getMillis)
+  }
 
   def deleteSub(transId: String, regime: String, subscriber: String): Future[Boolean] = {
     subscriptionsRepository.deleteSub(transId, regime, subscriber).map(res => res match {
@@ -98,26 +98,26 @@ trait SubscriptionFiringService {
   }
 
 
-    def fireIncorpUpdate(iu: QueuedIncorpUpdate): Future[Seq[Boolean]] = {
+  def fireIncorpUpdate(iu: QueuedIncorpUpdate): Future[Seq[Boolean]] = {
 
-          subscriptionsRepository.getSubscriptions(iu.incorpUpdate.transactionId) flatMap { subscriptions =>
-            Future.sequence( subscriptions map { sub =>
-              val iuResponse: IncorpUpdateResponse = IncorpUpdateResponse(sub.regime, sub.subscriber, sub.callbackUrl, iu.incorpUpdate)
+    subscriptionsRepository.getSubscriptions(iu.incorpUpdate.transactionId) flatMap { subscriptions =>
+      Future.sequence( subscriptions map { sub =>
+        val iuResponse: IncorpUpdateResponse = IncorpUpdateResponse(sub.regime, sub.subscriber, sub.callbackUrl, iu.incorpUpdate)
 
-              firingSubsConnector.connectToAnyURL(iuResponse, sub.callbackUrl)(hc) flatMap { response =>
-                  for {
-                    _ <- deleteSub(sub.transactionId, sub.regime, sub.subscriber)
-                    deleted <- deleteQueuedIU(iu.incorpUpdate.transactionId)
-                  } yield deleted
-              } recoverWith {
-                case e : Exception =>
-                  Logger.info(s"[SubscriptionFiringService][fireIncorpUpdate] Subscription with transactionId: ${sub.transactionId} failed to return a 200 response")
-                  queueRepository.updateTimestamp(sub.transactionId)
-                  Future(false)
-              }
-            } )
-          }
+        firingSubsConnector.connectToAnyURL(iuResponse, sub.callbackUrl)(hc) flatMap { response =>
+          for {
+            _ <- deleteSub(sub.transactionId, sub.regime, sub.subscriber)
+            deleted <- deleteQueuedIU(iu.incorpUpdate.transactionId)
+          } yield deleted
+        } recoverWith {
+          case e : Exception =>
+            Logger.info(s"[SubscriptionFiringService][fireIncorpUpdate] Subscription with transactionId: ${sub.transactionId} failed to return a 200 response")
+            queueRepository.updateTimestamp(sub.transactionId)
+            Future(false)
+        }
+      } )
     }
+  }
 
 
 

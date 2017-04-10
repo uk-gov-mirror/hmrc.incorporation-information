@@ -129,7 +129,8 @@ class FireSubscriptionsAPIISpec extends IntegrationSpecBase {
     }
 
 
-    "return there true values when three updates have been successfully fired" in new Setup {
+    "return a false value and two true values when three updates have been successfully fired, the first false value should be there as there are two " +
+      "subscriptions with the same transId, so the queued incorp update should not be deleted before the second subscription is fired and deleted" in new Setup {
       subCount shouldBe 0
       insert(sub)
       subCount shouldBe 1
@@ -149,7 +150,7 @@ class FireSubscriptionsAPIISpec extends IntegrationSpecBase {
 
       val fResult = service.fireIncorpUpdateBatch
       val result = await(fResult)
-      result shouldBe Seq(Seq(true, true), Seq(true))
+      result shouldBe Seq(Seq(false, true), Seq(true))
     }
 
 
