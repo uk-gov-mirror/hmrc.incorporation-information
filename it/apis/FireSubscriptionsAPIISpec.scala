@@ -90,7 +90,8 @@ class FireSubscriptionsAPIISpec extends IntegrationSpecBase {
 
 
   "fireIncorpUpdateBatch" should {
-    "return a Sequence of true values when one incorp update has been successfully fired" ignore new Setup {
+    "return a Sequence of a true value when one queued incorp update has been successfully fired and both the " +
+      "queued incorp update and the subscription have been deleted" in new Setup {
       subCount shouldBe 0
       insert(sub)
       subCount shouldBe 1
@@ -104,12 +105,11 @@ class FireSubscriptionsAPIISpec extends IntegrationSpecBase {
 
       val fResult = service.fireIncorpUpdateBatch
       val result = await(fResult)
-      result shouldBe Seq(Seq(true))
+      result shouldBe Seq(true)
     }
 
-    "return a sequence of (false, true) when two subscriptions with the same transId have successfully returned 200 HTTP responses and then deleted" +
-      "the first false value is due to that another subscription exists with the same transId at the time and therefore the queued incorp update" +
-      "cannot be deleted when the first subscription has been successfully tried and deleted" ignore new Setup {
+    "return a sequence of true when two subscriptions with the same transId have successfully returned 200 HTTP responses and then deleted" +
+     "and therefore the queued incorp update is then deleted" in new Setup {
       subCount shouldBe 0
       insert(sub)
       subCount shouldBe 1
@@ -125,7 +125,7 @@ class FireSubscriptionsAPIISpec extends IntegrationSpecBase {
 
       val fResult = service.fireIncorpUpdateBatch
       val result = await(fResult)
-      result shouldBe Seq(Seq(false, true))//the test run keeps swapping these values around, I think false should always be first
+      result shouldBe Seq(true)
     }
 
 
@@ -147,13 +147,13 @@ class FireSubscriptionsAPIISpec extends IntegrationSpecBase {
 
         val fResult = service.fireIncorpUpdateBatch
         val result = await(fResult)
-        result shouldBe Seq(Seq(false, true))//the test run keeps swapping these values around, I think false should always be first
+        result shouldBe Seq(true)
       }
     }
     // DUPLICATE - end
 
-    "return a false value and two true values when three updates have been successfully fired, the first false value should be there as there are two " +
-      "subscriptions with the same transId, so the queued incorp update should not be deleted before the second subscription is fired and deleted" ignore new Setup {
+    "return a sequence of two true values when two updates have been successfully fired, the first queued incorp update connected to two subscriptions with " +
+      "via the same transId, and the second one connected to one subscription" in new Setup {
       subCount shouldBe 0
       insert(sub)
       subCount shouldBe 1
@@ -173,11 +173,11 @@ class FireSubscriptionsAPIISpec extends IntegrationSpecBase {
 
       val fResult = service.fireIncorpUpdateBatch
       val result = await(fResult)
-      result shouldBe Seq(Seq(false, true), Seq(true))
+      result shouldBe Seq(true, true)
     }
 
 
-    "return a true value when an update has been fired that matches the transId of one of the two Subscriptions in the database" ignore new Setup {
+    "return a true value when an update has been fired that matches the transId of one of the two Subscriptions in the database" in new Setup {
       subCount shouldBe 0
       insert(sub3)
       subCount shouldBe 1
@@ -193,8 +193,26 @@ class FireSubscriptionsAPIISpec extends IntegrationSpecBase {
 
       val fResult = service.fireIncorpUpdateBatch
       val result = await(fResult)
-      result shouldBe Seq(Seq(true))
+      result shouldBe Seq(true)
       subCount shouldBe 1
+    }
+
+    "return a sequence of a false value when the timestamp of an queued incorp update is in the future" in new Setup {
+      subCount shouldBe 0
+      insert(sub)
+      subCount shouldBe 1
+
+      queueCount shouldBe 0
+      val futureQIU = QueuedIncorpUpdate(DateTime.now.plusMinutes(10), incorpUpdate)
+      insert(futureQIU)
+      queueCount shouldBe 1
+
+      val service = app.injector.instanceOf[SubscriptionFiringService]
+      stubPost("/mockUri", 200, "")
+
+      val fResult = service.fireIncorpUpdateBatch
+      val result = await(fResult)
+      result shouldBe Seq(false)
     }
 
   }

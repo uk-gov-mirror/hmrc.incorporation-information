@@ -58,13 +58,23 @@ trait SubscriptionFiringService {
 //      }
 //    }
 
-  def fireIncorpUpdateBatch: Future[Seq[Seq[Boolean]]] = {
+  def fireIncorpUpdateBatch: Future[Seq[Boolean]] = {
     queueRepository.getIncorpUpdates flatMap { updates =>
       Future.sequence( updates map { update => for {
         checkTSresult <- checkTimestamp(update.timestamp)
-        fireResult <- fireIncorpUpdate(update)
+        fireResult <- fire(checkTSresult, update)
       } yield fireResult
       })
+    }
+  }
+
+  def fire(tsRes: Boolean, update: QueuedIncorpUpdate): Future[Boolean] = {
+    if (tsRes){
+      fireIncorpUpdate(update)
+    } else {
+      Logger.info(s"[SubscriptionFiringService][f] QueuedIncorpUpdate with transactionId: ${update.incorpUpdate.transactionId} and timestamp: ${update.timestamp}" +
+        s" cannot be processed at this time as the timestamp is in the future")
+      Future.successful(false)
     }
   }
 
@@ -101,17 +111,14 @@ trait SubscriptionFiringService {
   }
 
 
-  private def fireIncorpUpdate(iu: QueuedIncorpUpdate): Future[Seq[Boolean]] = {
+  private def fireIncorpUpdate(iu: QueuedIncorpUpdate): Future[Boolean] = {
 
     subscriptionsRepository.getSubscriptions(iu.incorpUpdate.transactionId) flatMap { subscriptions =>
       Future.sequence( subscriptions map { sub =>
         val iuResponse: IncorpUpdateResponse = IncorpUpdateResponse(sub.regime, sub.subscriber, sub.callbackUrl, iu.incorpUpdate)
 
         firingSubsConnector.connectToAnyURL(iuResponse, sub.callbackUrl)(hc) flatMap { response =>
-          for {
-            deleted <- deleteSub(sub.transactionId, sub.regime, sub.subscriber)
-//            deleted <- deleteQueuedIU(iu.incorpUpdate.transactionId)
-          } yield deleted
+            deleteSub(sub.transactionId, sub.regime, sub.subscriber)
         } recoverWith {
           case e : Exception =>
             Logger.info(s"[SubscriptionFiringService][fireIncorpUpdate] Subscription with transactionId: ${sub.transactionId} failed to return a 200 response")
@@ -119,7 +126,7 @@ trait SubscriptionFiringService {
             Future(false)
         }
       } ) flatMap { sb =>
-        deleteQueuedIU(iu.incorpUpdate.transactionId) map { b => Seq(false, b) }
+        deleteQueuedIU(iu.incorpUpdate.transactionId)
       }
     }
   }
