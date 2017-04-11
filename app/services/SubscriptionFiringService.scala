@@ -49,14 +49,6 @@ trait SubscriptionFiringService {
 
   implicit val hc: HeaderCarrier
 
-//    def fireIncorpUpdateBatch(): Future[Seq[Seq[Boolean]]] = {
-//      queueRepository.getIncorpUpdates flatMap { updates =>
-//        Future.sequence( updates map { update =>
-//          fireIncorpUpdate(update)
-//          }
-//        )
-//      }
-//    }
 
   def fireIncorpUpdateBatch: Future[Seq[Boolean]] = {
     queueRepository.getIncorpUpdates flatMap { updates =>
