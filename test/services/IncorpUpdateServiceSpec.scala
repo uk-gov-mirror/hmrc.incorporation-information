@@ -25,6 +25,7 @@ import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mock.MockitoSugar
 import play.api.libs.json.{JsObject, Json}
+import reactivemongo.api.commands.WriteError
 import repositories._
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.test.UnitSpec
@@ -107,6 +108,16 @@ class IncorpUpdateServiceSpec extends UnitSpec with MockitoSugar with BeforeAndA
 
       val response = service.storeIncorpUpdates(Future.successful(emptyUpdates))
       response.map(ir => ir shouldBe InsertResult(0, 0, Seq()))
+    }
+
+    "return an InsertResult containing errors, when a failure occurred whilst adding incorp updates to the main collection" in new Setup {
+      when(mockTimepointRepository.retrieveTimePoint).thenReturn(Future.successful(Some(timepoint.toString)))
+      when(mockIncorporationCheckAPIConnector.checkForIncorpUpdate(Some(timepoint.toString))).thenReturn(Future.successful(emptyUpdates))
+      val writeError = WriteError(0, 121, "Invalid Incorp Update could not be stored")
+      when(mockIncorpUpdateRepository.storeIncorpUpdates(emptyUpdates)).thenReturn(InsertResult(0, 0, Seq(writeError)))
+
+      val response = service.storeIncorpUpdates(emptyUpdates)
+      response.map(ir => ir shouldBe InsertResult(0, 0, Seq(writeError)))
     }
   }
 

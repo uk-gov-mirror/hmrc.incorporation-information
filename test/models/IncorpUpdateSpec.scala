@@ -21,9 +21,7 @@ import play.api.libs.json.{JsLookupResult, JsObject, Json, __}
 import uk.gov.hmrc.play.test.UnitSpec
 import Helpers.JSONhelpers
 
-/**
-  * Created by jackie on 23/03/17.
-  */
+
 class IncorpUpdateSpec extends UnitSpec with JSONhelpers {
 
   "writes" should {
@@ -110,6 +108,12 @@ class IncorpUpdateSpec extends UnitSpec with JSONhelpers {
       (before <= timestamp && after >= timestamp) shouldBe true
     }
   }
+
+//  "mongoFormat" should {
+//    "return an IncorpUpdate in mongo format" in {
+//
+//    }
+//  }
 
 
 }

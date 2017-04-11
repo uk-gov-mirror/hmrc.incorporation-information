@@ -26,9 +26,7 @@ import reactivemongo.api.commands.{DefaultWriteResult, WriteError}
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
-  * Created by jackie on 29/03/17.
-  */
+
 class SubscriptionServiceSpec extends SCRSSpec {
 
   val mockSubRepo = mock[SubscriptionsMongoRepository]

@@ -20,12 +20,12 @@ import javax.inject.{Inject, Singleton}
 
 import org.joda.time.Duration
 import play.api.Logger
-import repositories.Repositories
 import services.IncorpUpdateService
-import uk.gov.hmrc.lock.LockKeeper
+import uk.gov.hmrc.lock.{LockKeeper, LockRepository}
 import uk.gov.hmrc.play.http.HeaderCarrier
 import uk.gov.hmrc.play.scheduling.ExclusiveScheduledJob
 import utils.SCRSFeatureSwitches
+import play.modules.reactivemongo.MongoDbConnection
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -37,7 +37,8 @@ class IncorpUpdatesJobImpl @Inject()(injService: IncorpUpdateService) extends In
   override lazy val lock: LockKeeper = new LockKeeper() {
     override val lockId = s"$name-lock"
     override val forceLockReleaseAfter: Duration = lockTimeout
-    override val repo = Repositories.lockRepository
+    private implicit val mongo = new MongoDbConnection {}.db
+    override val repo = new LockRepository
   }
 }
 
@@ -46,7 +47,7 @@ trait IncorpUpdatesJob extends ExclusiveScheduledJob with JobConfig {
   val lock: LockKeeper
   val incorpUpdateService: IncorpUpdateService
 
-  //$COVERAGE-OFF$
+
   override def executeInMutex(implicit ec: ExecutionContext): Future[Result] = {
     SCRSFeatureSwitches.scheduler.enabled match {
       case true => {
@@ -71,6 +72,5 @@ trait IncorpUpdatesJob extends ExclusiveScheduledJob with JobConfig {
       case false => Future.successful(Result(s"Feature is turned off"))
     }
   }
-  //$COVERAGE-ON$
 }
 

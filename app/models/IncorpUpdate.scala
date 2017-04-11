@@ -31,11 +31,11 @@ case class IncorpUpdate(transactionId : String,
                         statusDescription : Option[String] = None)
 
 object IncorpUpdate {
-  private val dateReads = Reads[DateTime](js =>
-    js.validate[String].map[DateTime](
-      DateTime.parse(_, DateTimeFormat.forPattern("yyyy-MM-dd"))
-    )
-  )
+//  private val dateReads = Reads[DateTime](js =>
+//    js.validate[String].map[DateTime](
+//      DateTime.parse(_, DateTimeFormat.forPattern("yyyy-MM-dd"))
+//    )
+//  )
 
   implicit val format = Json.format[IncorpUpdate]
 

@@ -215,6 +215,27 @@ class FireSubscriptionsAPIISpec extends IntegrationSpecBase {
       result shouldBe Seq(false)
     }
 
+    "return a sequence of false when the subscriptions for a queued incorp update did not return a 200 response" in new Setup {
+      subCount shouldBe 0
+      insert(sub)
+      subCount shouldBe 1
+      insert(sub2)
+      subCount shouldBe 2
+
+      queueCount shouldBe 0
+      insert(queuedIncorpUpdate)
+      queueCount shouldBe 1
+
+      val service = app.injector.instanceOf[SubscriptionFiringService]
+      stubPost("/mockUri", 400, "")
+
+      val fResult = service.fireIncorpUpdateBatch
+      val result = await(fResult)
+      result shouldBe Seq(false)
+    }
+
+
+
   }
 
 

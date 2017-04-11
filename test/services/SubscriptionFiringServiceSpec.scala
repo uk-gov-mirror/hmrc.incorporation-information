@@ -20,6 +20,7 @@ import Helpers.JSONhelpers
 import connectors.FiringSubscriptionsConnector
 import models.{IncorpUpdate, IncorpUpdateResponse, QueuedIncorpUpdate, Subscription}
 import org.joda.time.DateTime
+import org.mockito.Matchers
 import org.mockito.Mockito._
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.mock.MockitoSugar
@@ -28,13 +29,7 @@ import repositories.{QueueRepository, SubscriptionsRepository}
 import uk.gov.hmrc.play.http.{HeaderCarrier, HttpResponse}
 import uk.gov.hmrc.play.test.UnitSpec
 
-import scala.collection.generic.SeqFactory
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext.Implicits.global
 
-/**
-  * Created by jackie on 06/04/17.
-  */
 class SubscriptionFiringServiceSpec extends UnitSpec with MockitoSugar with BeforeAndAfterEach with JSONhelpers {
 
   val mockFiringSubsConnector = mock[FiringSubscriptionsConnector]
@@ -66,21 +61,56 @@ class SubscriptionFiringServiceSpec extends UnitSpec with MockitoSugar with Befo
     val service = new mockService {}
   }
 
+  val incorpUpdate = IncorpUpdate("transId1", "awaiting", None, None, "timepoint", None)
+  val queuedIncorpUpdate = QueuedIncorpUpdate(DateTime.now.minusMinutes(2), incorpUpdate)
+  val sub = Subscription("transId1", "CT", "subscriber", "www.test.com")
+  val incorpUpdateResponse = IncorpUpdateResponse("CT", "subscriber", "www.test.com", incorpUpdate)
 
-//  "fireIncorpUpdate" should {
-//    "return a Future of a Sequence of booleans when an incorp update has been successfully fired" in new Setup {
-//      val incorpUpdate = IncorpUpdate("transId1", "awaiting", None, None, "timepoint", None)
-//      val queuedIncorpUpdate = QueuedIncorpUpdate(DateTime.now, incorpUpdate)
-//      val sub = Subscription("transId1", "CT", "subscriber", "www.test.com")
-//      val incorpUpdateResponse = IncorpUpdateResponse("CT", "subscriber", "www.test.com", incorpUpdate)
-//      when(mockSubscriptionsRepository.getSubscriptions(incorpUpdate.transactionId)).thenReturn(Seq(sub))
-//      when(mockFiringSubsConnector.connectToAnyURL(incorpUpdateResponse, "www.test.com")(hc)).thenReturn(Future(HttpResponse(200)))
-//      when(mockSubscriptionsRepository.deleteSub(sub.transactionId, sub.regime, sub.subscriber)).thenReturn(Future(DefaultWriteResult(true, 1, Seq(), None, Some(1), Some(""))))
-//      when(mockQueueRepository.removeQueuedIncorpUpdate(sub.transactionId)).thenReturn(Future(true))
-//
-//      val result = await(service.fireIncorpUpdate(queuedIncorpUpdate))
-//      result shouldBe Seq(true)
-//    }
-//  }
+
+  "fireIncorpUpdateBatch" should {
+    "return a sequence of true when there is one queued incorp update in the batch and the timestamp of this queued update is in" +
+      " the past or present and the subscription successfully fires" in new Setup {
+      when(mockQueueRepository.getIncorpUpdates).thenReturn(Seq(queuedIncorpUpdate))
+      when(mockSubscriptionsRepository.getSubscriptions(Matchers.any())).thenReturn(Seq(sub), Seq())
+      when(mockQueueRepository.removeQueuedIncorpUpdate(sub.transactionId)).thenReturn(true)
+      when(mockFiringSubsConnector.connectToAnyURL(Matchers.any(), Matchers.any())(Matchers.any())).thenReturn(HttpResponse(200))
+
+      val result = await(service.fireIncorpUpdateBatch)
+      result shouldBe Seq(true)
+    }
+
+    "return a sequence of false when is one queued incorp update in the batch and the timestamp of this queued update is in" +
+      " the future and therefore the subscription is not fired" in new Setup {
+      val futureQIU = QueuedIncorpUpdate(DateTime.now.plusMinutes(5), incorpUpdate)
+      when(mockQueueRepository.getIncorpUpdates).thenReturn(Seq(futureQIU))
+
+      val result = await(service.fireIncorpUpdateBatch)
+      result shouldBe Seq(false)
+    }
+
+    "return a sequence of false when a successfully fired subscription has failed to be deleted" in new Setup {
+      when(mockQueueRepository.getIncorpUpdates).thenReturn(Seq(queuedIncorpUpdate))
+      when(mockSubscriptionsRepository.getSubscriptions(Matchers.any())).thenReturn(Seq(sub))
+      when(mockFiringSubsConnector.connectToAnyURL(Matchers.any(), Matchers.any())(Matchers.any())).thenReturn(HttpResponse(200))
+      when(mockSubscriptionsRepository.deleteSub(sub.transactionId, sub.regime, sub.subscriber)).thenReturn(DefaultWriteResult(false, 0, Seq(), None, None, None))
+
+      val result = await(service.fireIncorpUpdateBatch)
+      result shouldBe Seq(false)
+    }
+  }
+
+
+  "checkTimestamp" should {
+    "return true when a given timestamp is not in the future" in new Setup {
+      val result = await(service.checkTimestamp(DateTime.now.minusMinutes(2)))
+      result shouldBe true
+    }
+
+    "return false when a given timestamp is in the future" in new Setup {
+      val result = await(service.checkTimestamp(DateTime.now.plusMinutes(2)))
+      result shouldBe false
+    }
+  }
+
 
 }
