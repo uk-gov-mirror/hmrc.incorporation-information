@@ -109,8 +109,28 @@ class IncorpUpdateSpec extends UnitSpec with JSONhelpers {
     }
   }
 
+  //TODO Les to take a look - joda-datetime issue
 //  "mongoFormat" should {
 //    "return an IncorpUpdate in mongo format" in {
+//      val json = Json.parse(
+//        s"""
+//           |{
+//           |"_id":"transId1",
+//           |"transaction_status":"awaiting",
+//           |"company_number":"08978562",
+//           |"incorporated_on":"2013-12-12T12:00:00Z",
+//           |"timepoint":"timepoint",
+//           |"transaction_status_description":"status"
+//           |}
+//      """.stripMargin)
+//
+//      val a = DateTime.parse("2013-12-12")
+//
+//      val incorpUpdate = IncorpUpdate("transId1", "awaiting", Some("08978562"), Some(a), "timepoint", Some("status"))
+//
+//      val result = json.validate[IncorpUpdate](IncorpUpdate.mongoFormat)
+//
+//      result shouldBe incorpUpdate
 //
 //    }
 //  }

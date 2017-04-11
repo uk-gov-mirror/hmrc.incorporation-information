@@ -53,14 +53,12 @@ class SubscriptionServiceSpec extends SCRSSpec {
 
 
   "checkForSubscription" should {
-
     "return an incorp update for a subscription that exists" in new Setup {
       when(mockIncorpRepo.getIncorpUpdate(eqTo(transId))).thenReturn(Future.successful(Some(incorpUpdate)))
 
       val result = await(service.checkForIncorpUpdate(transId))
       result.get shouldBe incorpUpdate
     }
-
 
     "return a None result for when an added subscription that does not yet exist" in new Setup {
       when(mockIncorpRepo.getIncorpUpdate(eqTo(transId))).thenReturn(Future(None))
