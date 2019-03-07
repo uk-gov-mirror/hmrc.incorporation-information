@@ -26,7 +26,7 @@ import uk.gov.hmrc.play.bootstrap.controller.BaseController
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 
-class ManualTriggerControllerImpl @Inject()(@Named("incorp-update-job") val incUpdatesJob: ScheduledJob,
+class ManualTriggerControllerImpl @Inject()(@Named("incorp-updates-job") val incUpdatesJob: ScheduledJob,
                                             @Named("fire-subs-job") val fireSubJob: ScheduledJob) extends ManualTriggerController
 
 trait ManualTriggerController extends BaseController {

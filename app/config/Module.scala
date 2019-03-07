@@ -45,7 +45,7 @@ class Module extends AbstractModule {
     bind(classOf[SubscriptionFiringService]).to(classOf[SubscriptionFiringServiceImpl]).asEagerSingleton()
     bind(classOf[ProactiveMonitoringService]).to(classOf[ProactiveMonitoringServiceImpl]).asEagerSingleton()
 
-    bind(classOf[ScheduledJob]).annotatedWith(Names.named("incorp-update-job")).to(classOf[IncorpUpdatesJob]).asEagerSingleton()
+    bind(classOf[ScheduledJob]).annotatedWith(Names.named("incorp-updates-job")).to(classOf[IncorpUpdatesJob]).asEagerSingleton()
     bind(classOf[ScheduledJob]).annotatedWith(Names.named("fire-subs-job")).to(classOf[FireSubscriptionsJob]).asEagerSingleton()
     bind(classOf[ScheduledJob]).annotatedWith(Names.named("metrics-job")).to(classOf[MetricsJob]).asEagerSingleton()
     bind(classOf[ScheduledJob]).annotatedWith(Names.named("proactive-monitoring-job")).to(classOf[ProactiveMonitoringJob]).asEagerSingleton()

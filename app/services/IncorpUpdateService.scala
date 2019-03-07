@@ -51,7 +51,7 @@ class IncorpUpdateServiceImpl @Inject()(injConnector: IncorporationAPIConnector,
   lazy val loggingDays = msConfig.noRegisterAnInterestLoggingDay
   lazy val loggingTimes = msConfig.noRegisterAnInterestLoggingTime
 
-  lazy val lockoutTimeout = msConfig.getInt("schedules.incorp-update-job.lockTimeout")
+  lazy val lockoutTimeout = msConfig.getInt("schedules.incorp-updates-job.lockTimeout")
 
   lazy val lockKeeper: LockKeeper = new LockKeeper() {
     override val lockId = "incorp-updates-job-lock"

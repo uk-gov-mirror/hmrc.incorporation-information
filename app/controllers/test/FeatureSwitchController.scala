@@ -25,7 +25,7 @@ import utils.FeatureSwitch
 import scala.concurrent.Future
 
 class FeatureSwitchControllerImpl @Inject()(
-                                             @Named("incorp-update-job") val incUpdatesJob: ScheduledJob,
+                                             @Named("incorp-updates-job") val incUpdatesJob: ScheduledJob,
                                              @Named("metrics-job") val metricsJob: ScheduledJob,
                                              @Named("fire-subs-job") val fireSubsJob: ScheduledJob,
                                              @Named("proactive-monitoring-job") val proJob: ScheduledJob
@@ -49,8 +49,8 @@ trait FeatureSwitchController extends BaseController {
           case ("metrics-job", false) => metricsJob.scheduler.suspendJob("metrics-job")
           case ("fire-subs-job", true) => fireSubsJob.scheduler.resumeJob("fire-subs-job")
           case ("fire-subs-job", false) => fireSubsJob.scheduler.suspendJob("fire-subs-job")
-          case ("incorp-update-job", true) => fireSubsJob.scheduler.resumeJob("incorp-update-job")
-          case ("incorp-update-job", false) => fireSubsJob.scheduler.suspendJob("incorp-update-job")
+          case ("incorp-updates-job", true) => fireSubsJob.scheduler.resumeJob("incorp-updates-job")
+          case ("incorp-updates-job", false) => fireSubsJob.scheduler.suspendJob("incorp-updates-job")
           case ("proactive-monitoring-job", true) => fireSubsJob.scheduler.resumeJob("proactive-monitoring-job")
           case ("proactive-monitoring-job", false) => fireSubsJob.scheduler.suspendJob("proactive-monitoring-job")
           case (_, true)   => fs.enable(FeatureSwitch(featureName, enabled = true))

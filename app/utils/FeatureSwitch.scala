@@ -102,7 +102,7 @@ object FeatureSwitch {
 
 object SCRSFeatureSwitches extends SCRSFeatureSwitches {
   val KEY_TX_API = "transactionalAPI"
-  val KEY_INCORP_UPDATE = "incorp-update-job"
+  val KEY_INCORP_UPDATE = "incorp-updates-job"
   val KEY_FIRE_SUBS = "fire-subs-job"
   val KEY_SCHED_METRICS = "metrics-job"
   val KEY_PRO_MONITORING = "proactive-monitoring-job"
