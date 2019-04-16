@@ -66,7 +66,7 @@ trait TransactionalService {
        }
      }
 
-    connector.fetchTransactionalData(transactionId).map {
+    connector.fetchTransactionalData(transactionId,useShareholderStub=true).map {
       case SuccessfulTransactionalAPIResponse(js) =>
         val shareholders = js.as[Option[JsArray]](Shareholders.reads)
         logExistenceOfShareholders(shareholders)

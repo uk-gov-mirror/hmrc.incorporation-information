@@ -137,10 +137,14 @@ trait IncorporationAPIConnector extends AlertLogging {
     } recover handleError(timepoint)
   }
 
-  def fetchTransactionalData(transactionID: String)(implicit hc: HeaderCarrier): Future[TransactionalAPIResponse] = {
+  def fetchTransactionalData(transactionID: String, useShareholderStub: Boolean = false)(implicit hc: HeaderCarrier): Future[TransactionalAPIResponse] = {
+    val stubShareholderURI = useShareholderStub match {
+      case true => "shareholders"
+      case false => "fetch-data"
+    }
     val (http, realHc, url) = useProxy match {
       case true => (httpProxy, createAPIAuthHeader, s"$cohoBaseUrl/submissionData/$transactionID")
-      case false => (httpNoProxy, hc, s"$stubBaseUrl/fetch-data/$transactionID")
+      case false => (httpNoProxy, hc, s"$stubBaseUrl/$stubShareholderURI/$transactionID")
     }
 
     metrics.processDataResponseWithMetrics(Some(successCounter), Some(failureCounter), Some(metrics.internalAPITimer.time())) {
