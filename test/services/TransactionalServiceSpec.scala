@@ -295,7 +295,7 @@ class TransactionalServiceSpec extends SCRSSpec with LogCapturing {
     "return Json when a document is retrieved by the supplied transaction Id and the sub-document is fetched by the supplied key" in new Setup {
       val response = SuccessfulTransactionalAPIResponse(buildJson())
       when(mockRepos.getIncorpUpdate(any())).thenReturn(Future.successful(None))
-      when(mockConnector.fetchTransactionalData(any())(any()))
+      when(mockConnector.fetchTransactionalData(any(),any())(any()))
         .thenReturn(Future.successful(response))
 
       await(service.fetchOfficerList(transactionId)) shouldBe officersJson
@@ -391,7 +391,7 @@ class TransactionalServiceSpec extends SCRSSpec with LogCapturing {
     "return None when companyProfile cannot be found" in new Setup {
       val response = FailedTransactionalAPIResponse
       when(mockCohoConnector.getCompanyProfile(Matchers.any[String], any())(any())).thenReturn(Future.successful(None))
-      when(mockConnector.fetchTransactionalData(Matchers.any[String])(any())).thenReturn(Future.successful(response))
+      when(mockConnector.fetchTransactionalData(Matchers.any[String],Matchers.any[Boolean])(any())).thenReturn(Future.successful(response))
       await(service.fetchCompanyProfileFromCoho("num", "")) shouldBe None
     }
 
@@ -1121,7 +1121,7 @@ class TransactionalServiceSpec extends SCRSSpec with LogCapturing {
         """.stripMargin).as[JsObject]
       val expectedCodes: JsValue = Json.parse("""{"sic_codes": ["12345","67890"]}""")
 
-      when(mockConnector.fetchTransactionalData(Matchers.any[String])(any()))
+      when(mockConnector.fetchTransactionalData(Matchers.any[String],Matchers.any[Boolean])(any()))
         .thenReturn(Future.successful(SuccessfulTransactionalAPIResponse(expectedJson)))
 
       await(service.fetchSicCodes(transactionId, usePublicAPI = false)) shouldBe Some(expectedCodes)
@@ -1226,7 +1226,7 @@ class TransactionalServiceSpec extends SCRSSpec with LogCapturing {
       when(mockCohoConnector.getCompanyProfile(Matchers.any[String], any())(any()))
         .thenReturn(Future.successful(None))
 
-      when(mockConnector.fetchTransactionalData(Matchers.any[String])(any()))
+      when(mockConnector.fetchTransactionalData(Matchers.any[String],Matchers.any[Boolean])(any()))
         .thenReturn(Future.successful(SuccessfulTransactionalAPIResponse(transactionalJson)))
 
       await(service.fetchSicByTransId(transactionId)) shouldBe Some(expectedCodes)
@@ -1239,7 +1239,7 @@ class TransactionalServiceSpec extends SCRSSpec with LogCapturing {
       when(mockCohoConnector.getCompanyProfile(Matchers.any[String], any())(any()))
         .thenReturn(Future.successful(None))
 
-      when(mockConnector.fetchTransactionalData(Matchers.any[String])(any()))
+      when(mockConnector.fetchTransactionalData(Matchers.any[String],Matchers.any[Boolean])(any()))
         .thenReturn(Future.successful(FailedTransactionalAPIResponse))
 
       await(service.fetchSicByTransId(transactionId)) shouldBe None
@@ -1249,7 +1249,7 @@ class TransactionalServiceSpec extends SCRSSpec with LogCapturing {
       when(mockRepos.getIncorpUpdate(eqTo(transactionId)))
         .thenReturn(incorporated(false))
 
-      when(mockConnector.fetchTransactionalData(Matchers.any[String])(any()))
+      when(mockConnector.fetchTransactionalData(Matchers.any[String],Matchers.any[Boolean])(any()))
         .thenReturn(Future.successful(FailedTransactionalAPIResponse))
 
       await(service.fetchSicByTransId(transactionId)) shouldBe None
@@ -1259,7 +1259,7 @@ class TransactionalServiceSpec extends SCRSSpec with LogCapturing {
       when(mockRepos.getIncorpUpdate(eqTo(transactionId)))
         .thenReturn(incorporated(false))
 
-      when(mockConnector.fetchTransactionalData(Matchers.any[String])(any()))
+      when(mockConnector.fetchTransactionalData(Matchers.any[String],Matchers.any[Boolean])(any()))
         .thenReturn(Future.successful(FailedTransactionalAPIResponse))
 
       await(service.fetchSicByTransId(transactionId)) shouldBe None
@@ -1308,7 +1308,7 @@ class TransactionalServiceSpec extends SCRSSpec with LogCapturing {
           | ]
           |  """.stripMargin).as[JsArray]
 
-      when(mockConnector.fetchTransactionalData(Matchers.any[String])(any()))
+      when(mockConnector.fetchTransactionalData(Matchers.any[String],Matchers.any[Boolean])(any()))
         .thenReturn(Future.successful(SuccessfulTransactionalAPIResponse(txJsonContainingShareholders)))
       withCaptureOfLoggingFrom(Logger) { logEvents =>
         await(service.fetchShareholders(transactionId)) shouldBe Some(extractedJson)
@@ -1333,7 +1333,7 @@ class TransactionalServiceSpec extends SCRSSpec with LogCapturing {
         Json.parse(
           """[]
           """.stripMargin)
-      when(mockConnector.fetchTransactionalData(Matchers.any[String])(any()))
+      when(mockConnector.fetchTransactionalData(Matchers.any[String],Matchers.any[Boolean])(any()))
         .thenReturn(Future.successful(SuccessfulTransactionalAPIResponse(txJsonContainingEmptyListOfShareholders)))
       withCaptureOfLoggingFrom(Logger) { logEvents =>
         await(service.fetchShareholders(transactionId)) shouldBe Some(extractedJson)
@@ -1353,7 +1353,7 @@ class TransactionalServiceSpec extends SCRSSpec with LogCapturing {
              |  "type": "ltd"
              |  }""".stripMargin)
 
-      when(mockConnector.fetchTransactionalData(Matchers.any[String])(any()))
+      when(mockConnector.fetchTransactionalData(Matchers.any[String],Matchers.any[Boolean])(any()))
         .thenReturn(Future.successful(SuccessfulTransactionalAPIResponse(txJsonContainingNOShareholdersKey)))
       withCaptureOfLoggingFrom(Logger) { logEvents =>
         await(service.fetchShareholders(transactionId)) shouldBe None

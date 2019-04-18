@@ -11,14 +11,14 @@ object MicroServiceBuild extends Build with MicroService {
   val compile = Seq(
     ws,
     "com.enragedginger" %% "akka-quartz-scheduler" % "1.8.0-akka-2.5.x",
-    "uk.gov.hmrc" %% "bootstrap-play-25" % "4.9.0",
+    "uk.gov.hmrc" %% "bootstrap-play-25" % "4.11.0",
     "uk.gov.hmrc" %% "domain" % "5.6.0-play-25",
     "uk.gov.hmrc" %% "mongo-lock" % "6.12.0-play-25",
     "uk.gov.hmrc" %% "simple-reactivemongo" % "7.16.0-play-25"
   )
 
   def test(scope: String = "test,it") = Seq(
-    "uk.gov.hmrc" %% "hmrctest" % "3.6.0-play-25" % scope,
+    "uk.gov.hmrc" %% "hmrctest" % "3.8.0-play-25" % scope,
     "org.scalatest" %% "scalatest" % "3.0.0" % scope,
     "org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % scope,
     "org.pegdown" % "pegdown" % "1.6.0" % scope,

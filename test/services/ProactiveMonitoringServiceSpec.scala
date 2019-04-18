@@ -59,7 +59,7 @@ class ProactiveMonitoringServiceSpec extends UnitSpec with MockitoSugar {
   "pollTransactionalAPI" should {
 
     "return a success response" in new Setup {
-      when(mockTransactionalConnector.fetchTransactionalData(eqTo(transactionId))(any()))
+      when(mockTransactionalConnector.fetchTransactionalData(eqTo(transactionId), any())(any()))
         .thenReturn(Future.successful(SuccessfulTransactionalAPIResponse(testJson)))
 
       val result: String = service.pollTransactionalAPI
@@ -67,7 +67,7 @@ class ProactiveMonitoringServiceSpec extends UnitSpec with MockitoSugar {
     }
 
     "return a failed response" in new Setup {
-      when(mockTransactionalConnector.fetchTransactionalData(eqTo(transactionId))(any()))
+      when(mockTransactionalConnector.fetchTransactionalData(eqTo(transactionId), any())(any()))
         .thenReturn(Future.successful(FailedTransactionalAPIResponse))
 
       val result: String = service.pollTransactionalAPI
@@ -97,7 +97,7 @@ class ProactiveMonitoringServiceSpec extends UnitSpec with MockitoSugar {
   "pollAPIs" should {
 
     "return a success response from each API" in new Setup {
-      when(mockTransactionalConnector.fetchTransactionalData(eqTo(transactionId))(any()))
+      when(mockTransactionalConnector.fetchTransactionalData(eqTo(transactionId), any())(any()))
         .thenReturn(Future.successful(SuccessfulTransactionalAPIResponse(testJson)))
       when(mockPublicCohoConnector.getCompanyProfile(eqTo(crn), any())(any()))
         .thenReturn(Future.successful(Some(testJson)))
@@ -107,7 +107,7 @@ class ProactiveMonitoringServiceSpec extends UnitSpec with MockitoSugar {
     }
 
     "return a failed response from each API" in new Setup {
-      when(mockTransactionalConnector.fetchTransactionalData(eqTo(transactionId))(any()))
+      when(mockTransactionalConnector.fetchTransactionalData(eqTo(transactionId), any())(any()))
         .thenReturn(Future.successful(FailedTransactionalAPIResponse))
       when(mockPublicCohoConnector.getCompanyProfile(eqTo(crn), any())(any()))
         .thenReturn(Future.successful(None))
@@ -117,7 +117,7 @@ class ProactiveMonitoringServiceSpec extends UnitSpec with MockitoSugar {
     }
 
     "return a success response from the transactional API and a failed response from the public API" in new Setup {
-      when(mockTransactionalConnector.fetchTransactionalData(eqTo(transactionId))(any()))
+      when(mockTransactionalConnector.fetchTransactionalData(eqTo(transactionId), any())(any()))
         .thenReturn(Future.successful(SuccessfulTransactionalAPIResponse(testJson)))
       when(mockPublicCohoConnector.getCompanyProfile(eqTo(crn), any())(any()))
         .thenReturn(Future.successful(None))
