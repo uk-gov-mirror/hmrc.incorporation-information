@@ -170,22 +170,6 @@ class SubscriptionAPIISpec extends IntegrationSpecBase {
 
   }
 
-  "getSubscription" should {
-
-    "return a 200 HTTP response when a subscription with the given info exists" in new Setup {
-      await(repository.insertSub(sub))
-
-      val response = client(s"subscribe/$transactionId/regime/$regime/subscriber/$subscriber").get.futureValue
-      response.status shouldBe 200
-    }
-
-    "return a 404 HTTP response when a subscription with the given info does not exist" in new Setup {
-
-      val response = client(s"subscribe/$transactionId/regime/$regime/subscriber/$subscriber").get.futureValue
-      response.status shouldBe 404
-    }
-  }
-
   "forceSubscription" should {
 
     "force a subscription into II even if the corresponding incorp update exists and insert an incorp update into the queue" in new Setup {

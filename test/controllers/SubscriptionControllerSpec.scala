@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,29 +130,6 @@ class SubscriptionControllerSpec extends SCRSSpec with JSONhelpers {
       val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
 
       val result: Future[Result] = controller.removeSubscription(transactionId,regime,subscriber)(request)
-      status(result) shouldBe 404
-    }
-  }
-
-  "getSubscription" should {
-    "return a 200 when a subscription is found" in new Setup {
-      when(mockService.getSubscription(Matchers.eq(transactionId),Matchers.eq(regime),Matchers.eq(subscriber)))
-        .thenReturn(Future.successful(Some(sub)))
-
-      val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
-
-      val result: Future[Result] = controller.getSubscription(transactionId,regime,subscriber)(request)
-      status(result) shouldBe 200
-      contentAsJson(result) shouldBe Json.toJson(sub)
-    }
-
-    "return a 404 when a subscription is found" in new Setup {
-      when(mockService.getSubscription(Matchers.eq(transactionId),Matchers.eq(regime),Matchers.eq(subscriber)))
-        .thenReturn(Future.successful(None))
-
-      val request: FakeRequest[AnyContentAsEmpty.type] = FakeRequest()
-
-      val result: Future[Result] = controller.getSubscription(transactionId,regime,subscriber)(request)
       status(result) shouldBe 404
     }
   }

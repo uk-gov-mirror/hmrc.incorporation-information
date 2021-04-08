@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 HM Revenue & Customs
+ * Copyright 2021 HM Revenue & Customs
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,14 +56,6 @@ trait SubscriptionController extends BackendBaseController {
         case DeletedSub => Ok
         case NotDeletedSub => NotFound
         case _ => InternalServerError
-      }
-  }
-
-  def getSubscription(transactionId: String, regime: String, subscriber: String) = Action.async {
-    implicit request =>
-      service.getSubscription(transactionId, regime, subscriber).map {
-        case Some(sub) => Ok(Json.toJson(sub))
-        case _ => NotFound("The subscription does not exist")
       }
   }
 
